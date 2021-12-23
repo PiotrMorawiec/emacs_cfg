@@ -19,11 +19,23 @@
 (delete-selection-mode 1)
 (column-number-mode 1)
 
-;; mouse behaviour
+;; Enable / disable displaying LR/CR characters
+;; (global-whitespace-mode nil)
+
+;; Enable mouse support in terminal Emacs
+(xterm-mouse-mode 1)
+
+;; How to get colors in temrinal Emacs ?
+;; https://www.gnu.org/software/emacs/manual/html_mono/efaq.html#Colors-on-a-TTY
+
+;; Mouse behaviour
 (setq mouse-wheel-progressive-speed nil)
 
-;; enable full screen
+;; Enable full screen
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+;; Make ESC quit prompts
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 (global-hl-line-mode 1)
 (set-face-background hl-line-face "gray13")
@@ -100,6 +112,27 @@
 ;; PACKAGES
 ;; --------------------------------------------------------------------------------------------
 
+(use-package command-log-mode
+  :ensure t
+  :bind (("C-c c t" . clm/toggle-command-log-buffer)
+	 ("C-c c o" . clm/open-command-log-buffer)
+	 ("C-c c x" . clm/close-command-log-buffer)
+	 ("C-c c c" . clm/command-log-clear)
+	 ("C-c c s" . clm/save-command-log)
+	 )
+  :custom
+  ;; disable default keybinding "C-c o" that opens command-log-buffer
+  (command-log-mode-key-binding-open-log nil)
+  :config
+  ;; Enable command-log-mode globally by default
+  (global-command-log-mode t))
+
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 1))
+
 (use-package idle-highlight-mode
   :ensure t
   :custom
@@ -142,18 +175,18 @@
   :custom
   (display-battery-mode t))
 
-(use-package keycast
-  :config
-  ;; This works with doom-modeline, inspired by this comment:
-  ;; https://github.com/tarsius/keycast/issues/7#issuecomment-627604064
-  (define-minor-mode keycast-mode
-    "Show current command and its key binding in the mode line."
-    :global t
-    (if keycast-mode
-	(add-hook 'pre-command-hook 'keycast--update t)
-      (remove-hook 'pre-command-hook 'keycast--update)))
-  (add-to-list 'global-mode-string '("" mode-line-keycast " "))
-  (keycast-mode))
+;; (use-package keycast
+;;   :config
+;;   ;; This works with doom-modeline, inspired by this comment:
+;;   ;; https://github.com/tarsius/keycast/issues/7#issuecomment-627604064
+;;   (define-minor-mode keycast-mode
+;;     "Show current command and its key binding in the mode line."
+;;     :global t
+;;     (if keycast-mode
+;; 	(add-hook 'pre-command-hook 'keycast--update t)
+;;       (remove-hook 'pre-command-hook 'keycast--update)))
+;;   (add-to-list 'global-mode-string '("" mode-line-keycast " "))
+;;   (keycast-mode nil))
 
 (use-package auto-complete
   :ensure t
@@ -252,7 +285,7 @@
     (member tag-name (org-roam-node-tags node))))
 
 (defun my-org-roam-list-notes-by-tag (tag-name)
-  "Function returns list composed of all Org Roam files, containing given tag" 
+  "Function returns list composed of all Org Roam files, containing given tag"
   (interactive)
   (mapcar #'org-roam-node-file
           (seq-filter
@@ -276,9 +309,11 @@
   :ensure t
   :custom
   (magit-status-buffer-switch-function 'switch-to-buffer)
-  :bind (("C-x g s" . magit-status)
-         ("C-x g b" . magit-blame)
-         ("C-x g c" . magit-checkout)))
+  :bind (("C-c g s" . magit-status)
+         ("C-c g f" . magit-fetch)
+         ("C-c g b" . magit-blame)
+         ("C-c g r" . magit-branch)
+         ("C-c g c" . magit-checkout)))
 
 (use-package projectile
   :ensure t
@@ -346,8 +381,8 @@
           ("M-y"     . helm-show-kill-ring)
           ("C-x C-f" . helm-find-files)
           ("C-b"     . helm-buffers-list)
-          ("C-x c o" . helm-occur)
-          ("C-x r b" . helm-filtered-bookmarks)
+          ("C-c h o" . helm-occur)
+          ("C-c h b" . helm-filtered-bookmarks)
           )
   :custom
   (helm-position 'bottom)
@@ -409,6 +444,71 @@
   :config
   (minimap-mode -1))
 
+(defun my/lsp-mode-setup ()
+  "Function configures LSP by disabling/enabling particular LSP features
+   See:
+      https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/"
+  ;; Configure headerline
+  (setq lsp-headerline-breadcrumb-segments '(file symbols))
+  (lsp-headerline-breadcrumb-mode)
+  ;; Disable linter by default (Flycheck / Flymake)
+  (setq lsp-diagnostics-provider :none)
+  (setq lsp-modeline-code-actions-mode-segments '(count icon name))
+  (lsp-modeline-code-actions-mode))
+
+;; Language Server Protocol support
+(use-package lsp-mode
+  :ensure t
+  :commands (lsp lsp-deferred)
+  :hook (lsp-mode . my/lsp-mode-setup)
+  :init
+  (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
+  :custom
+  (lsp-clients-svlangserver-launchConfiguration "verilator -sv --lint-only -Wall")
+  (lsp-clients-svlangserver-formatCommand "verible-verilog-format")
+  :config
+  (lsp-enable-which-key-integration t))
+
+;; This package is reposnsible for displaying auxiliary informations on symbols
+(use-package lsp-ui
+  :hook (lsp-mode . lsp-ui-mode)
+  :custom
+  (lsp-ui-doc-position 'bottom))
+
+;; Great source of information about flyckeck:
+;; https://www.masteringemacs.org/article/spotlight-flycheck-a-flymake-replacement
+(use-package flycheck
+  :ensure t
+  :custom
+  (global-flycheck-mode nil))
+
+(use-package lsp-treemacs
+  :after (lsp treemacs))
+
+(use-package helm-lsp
+  :after (lsp helm))
+
+;; (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
+
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :bind
+  (:map company-active-map
+        ("<tab>" . company-complete-selection))
+  (:map lsp-mode-map
+        ("<tab>" . company-indent-or-complete-common))
+  :custom
+  ;; amount of letters need to be already typed in order to start completion
+  (company-minimum-prefix-length 1)
+  ;; time delya before starting completion
+  (company-idle-delay 0.0))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
+
+(require 'lsp-verilog)
+
  (use-package verilog-mode
    :ensure t
    :custom
@@ -424,23 +524,39 @@
    (verilog-indent-level-directive 0)
    (verilog-indent-level-module 2))
 
-(use-package paredit
+(use-package python-mode
   :ensure t
-  :init
-  (add-hook 'clojure-mode-hook #'enable-paredit-mode)
-  (add-hook 'cider-repl-mode-hook #'enable-paredit-mode)
-  (add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
-  (add-hook 'eval-expression-minibuffer-setup-hook #'enable-paredit-mode)
-  (add-hook 'ielm-mode-hook #'enable-paredit-mode)
-  (add-hook 'lisp-mode-hook #'enable-paredit-mode)
-  (add-hook 'lisp-interaction-mode-hook #'enable-paredit-mode)
-  (add-hook 'scheme-mode-hook #'enable-paredit-mode)
-  :config
-  (show-paren-mode t)
-  (paredit-mode t)
-  :bind (("M-[" . paredit-wrap-square)
-      ("M-{" . paredit-wrap-curly))
-  :diminish nil)
+  :hook
+  (python-mode . lsp-deferred)
+  (python-mode . (lambda ()
+		   (setq indent-tabs-mode t)
+		   (setq tab-width 4)
+		   (setq python-indent-offset 4)))
+  :custom
+  (python-shell-interpreter "python3"))
+
+;; (use-package pyvenv
+;;   :config
+;;   (pyvenv-mode 1))
+
+
+;; (use-package paredit
+;;   :ensure t
+;;   :init
+;;   (add-hook 'clojure-mode-hook #'enable-paredit-mode)
+;;   (add-hook 'cider-repl-mode-hook #'enable-paredit-mode)
+;;   (add-hook 'emacs-lisp-mode-hook #'enable-paredit-mode)
+;;   (add-hook 'eval-expression-minibuffer-setup-hook #'enable-paredit-mode)
+;;   (add-hook 'ielm-mode-hook #'enable-paredit-mode)
+;;   (add-hook 'lisp-mode-hook #'enable-paredit-mode)
+;;   (add-hook 'lisp-interaction-mode-hook #'enable-paredit-mode)
+;;   (add-hook 'scheme-mode-hook #'enable-paredit-mode)
+;;   :config
+;;   (show-paren-mode t)
+;;   (paredit-mode t)
+;;   :bind (("M-[" . paredit-wrap-square)
+;;       ("M-{" . paredit-wrap-curly))
+;;   :diminish nil)
 
 ;; --------------------------------------------------------------------------------------------
 ;; KEY BINDINGS
@@ -471,9 +587,11 @@
 (global-set-key (kbd "C-c o c")    #'my-open-customization-file)
 (global-set-key (kbd "C-c o a")    #'org-agenda-list)
 
-(global-set-key (kbd "C-x p r")    #'helm-projectile-recentf)
-(global-set-key (kbd "C-x p R")    #'projectile-replace)
-(global-set-key (kbd "C-x p x")    #'projectile-replace-regexp)
+(global-set-key (kbd "C-c p r")    #'helm-projectile-recentf)
+(global-set-key (kbd "C-c p R")    #'projectile-replace)
+(global-set-key (kbd "C-c p x")    #'projectile-replace-regexp)
+(global-set-key (kbd "C-,")        #'helm-projectile-grep)
+(global-set-key (kbd "C-.")        #'helm-projectile-ag)
 
 (define-key helm-map (kbd "TAB")   #'helm-execute-persistent-action)
 (define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
@@ -562,7 +680,7 @@
       (quote (("*" bold)
               ("/" italic)
               ("_" underline)
-              ("=" (:foreground "yellow" :background "black"))
+              ("=" (:foreground "orange" :background inherit))
               ("~" org-verbatim verbatim)
               ("+"
                (:strike-through t))
@@ -580,6 +698,19 @@
 
 ;; Set Babel to use Python 3
 (setq org-babel-python-command "python3")
+
+;; This is needed as of Org 9.2
+(require 'org-tempo)
+
+;; Type for example
+;;   - <py followed by TAB to insert python clode block
+;;   - <el followed by TAB to insert elisp  clode block
+(add-to-list 'org-structure-template-alist '("sh"  . "src shell"))
+(add-to-list 'org-structure-template-alist '("el"  . "src emacs-lisp"))
+(add-to-list 'org-structure-template-alist '("py"  . "src python"))
+(add-to-list 'org-structure-template-alist '("sv"  . "src verilog"))
+(add-to-list 'org-structure-template-alist '("vhd" . "src vhdl"))
+(add-to-list 'org-structure-template-alist '("s"   . "#+name: ?\n#+begin_src \n\n#+end_src"))
 
 ;; --------------------------------------------------------------------------------------------
 ;; TRAMP
