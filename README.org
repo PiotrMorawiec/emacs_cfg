@@ -1,0 +1,17 @@
+* Welcome
+
+Welcome to my Emacs configuration (init) file ;)
+
+The structure of this file has been inspired by the [[https://github.com/daviwil/emacs-from-scratch/tree/9388cf6ecd9b44c430867a5c3dad5f050fdc0ee1][Emacs From Scratch]] project, so I warmly encourage to get familiar with it, as well as with associated [[https://www.youtube.com/c/SystemCrafters][SystemCrafters]] series on YouTube.
+
+* Prerequisites
+
+This configuration requires following, additional packages to work as expected:
+- python lsp package - [[https://emacs-lsp.github.io/lsp-mode/page/lsp-pylsp/][pylsp]]
+
+* How to edit configuration ?
+
+Emacs reads *init.el* file during startup.
+Hovewer, do not modify this file. Instead, keep your config in ORG file *init.org* (to keep it clean and readable), and regenerate *init.el* if necessary, by executing either *C-c C-v t*, or *org-babel-tangle* on *init.org* file.
+
+
