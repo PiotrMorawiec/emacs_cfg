@@ -7,8 +7,8 @@
 ;; INIT CONFIG
 ;; --------------------------------------------------------------------------------------------
 
-;; Set startup screen photo
-;; (setq fancy-splash-image "path")
+;; Set startup screen photo (image has to be small enough to fin into splash screen)
+(setq fancy-splash-image "~/.emacs.d/img/pm_profile_scaled.png")
 
 (tool-bar-mode -1)
 (menu-bar-mode -1)
@@ -24,6 +24,12 @@
 
 ;; Enable mouse support in terminal Emacs
 (xterm-mouse-mode 1)
+
+;; Enable auto revert mode globally, so that all buffers will be in sync with whats actually on disk.
+;; If you are sure that the file will only change by growing at the end, use Auto Revert Tail mode instead, as
+;; it is more efficient for this.
+(global-auto-revert-mode t)
+
 
 ;; How to get colors in temrinal Emacs ?
 ;; https://www.gnu.org/software/emacs/manual/html_mono/efaq.html#Colors-on-a-TTY
@@ -111,6 +117,21 @@
 ;; --------------------------------------------------------------------------------------------
 ;; PACKAGES
 ;; --------------------------------------------------------------------------------------------
+
+(use-package dashboard
+  :ensure t
+  :diminish dashboard-mode
+  :config
+  (setq dashboard-banner-logo-title "Welcome to Emacs dashboard !")
+  (setq dashboard-startup-banner "~/.emacs.d/img/pm_profile_scaled.png")
+  (setq dashboard-center-content t)
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-set-footer nil)
+  (setq dashboard-items '((projects  . 5)
+                          (bookmarks . 5)
+			  (agenda    . 5)))
+  (dashboard-setup-startup-hook))
 
 (use-package command-log-mode
   :ensure t
@@ -244,6 +265,10 @@
       (file "~/org_roam_database/templates/words_template.org")
       :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "")
       :unnarrowed t)
+     ("t" "todo list" plain
+      (file "~/org_roam_database/templates/todos_template.org")
+      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "")
+      :unnarrowed t)
      ("p" "private agenda" plain
       (file "~/org_roam_database/templates/private_agenda_template.org")
       :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "")
@@ -295,7 +320,8 @@
 (defun my-org-roam-refresh-agenda-list ()
   (interactive)
   (require 'org-roam)
-  (setq org-agenda-files (append (my-org-roam-list-notes-by-tag "work_agenda")
+  (setq org-agenda-files (append (my-org-roam-list-notes-by-tag "todos")
+				 (my-org-roam-list-notes-by-tag "work_agenda")
 				 (my-org-roam-list-notes-by-tag "private_agenda"))))
 
 ;; Build the agenda list the first time for the session
@@ -699,6 +725,15 @@
 ;; Set Babel to use Python 3
 (setq org-babel-python-command "python3")
 
+;; Do not ask for permission to execute code block
+(setq org-confirm-babel-evalauate nil)
+
+;; Set (overwrite) default ORG Babel Header Arguments, for all code blocks.
+;; See: https://orgmode.org/manual/Using-Header-Arguments.html
+(setq org-babel-default-header-args
+      (cons '(:tangle . "yes")
+            (assq-delete-all :noweb org-babel-default-header-args)))
+
 ;; This is needed as of Org 9.2
 (require 'org-tempo)
 
@@ -721,4 +756,3 @@
 ;; (setq tramp-shell-prompt-pattern "^[^$>\n]*[#$%>] *\\(\[[0-9;]*[a-zA-Z] *\\)*")
 
 (message "... finished reading ~/.emacs.d/init.el")
-
