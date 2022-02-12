@@ -8,6 +8,7 @@ The structure of this file has been inspired by the [[https://github.com/daviwil
 
 This configuration requires following, additional packages to work as expected:
 - python lsp package - [[https://emacs-lsp.github.io/lsp-mode/page/lsp-pylsp/][pylsp]]
+- ncurses
 
 * How to edit configuration ?
 

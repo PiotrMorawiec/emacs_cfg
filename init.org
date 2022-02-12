@@ -657,6 +657,162 @@ This snippet adds a hook to =org-mode= buffers so that =my/org-babel-tangle-conf
     :hook (company-mode . company-box-mode))
 
 #+end_src
+** Terminals
+
+*** term-mode
+
+term-mode is a built-in terminal emulator in Emacs. Because it is written in Emacs Lisp, you can start using it immediately with very little configuration. If you are on Linux or macOS, term-mode is a great choice to get started because it supports fairly complex terminal applications (htop, vim, etc) and works pretty reliably. However, because it is written in Emacs Lisp, it can be slower than other options like vterm. The speed will only be an issue if you regularly run console apps with a lot of output.
+
+One important thing to understand is line-mode versus char-mode. line-mode enables you to use normal Emacs keybindings while moving around in the terminal buffer while char-mode sends most of your keypresses to the underlying terminal. While using term-mode, you will want to be in char-mode for any terminal applications that have their own keybindings. If you’re just in your usual shell, line-mode is sufficient and feels more integrated with Emacs.
+
+=Some usefull commands / key bingings=
+
+| KEYCHORD | COMMAND        | INFO                                                         |
+|----------+----------------+--------------------------------------------------------------|
+| C-c C-j  | term-line-mode | Commands (e.g. C-c) will be interpereted as Emacs commands   |
+| C-c C-k  | term-char-mode | Commands (e.g. C-c) will be interpreted as terminal commands |
+| C-c C-p  |                | Go back in the buffer's prompts                              |
+| C-c C-n  |                | Go forward in the buffer's prompts                           |
+|          |                |                                                              |
+
+#+begin_src emacs-lisp
+  (use-package term
+    :config
+    (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
+    ;;(setq explicit-zsh-args '())         ;; Use 'explicit-<shell>-args for shell-specific args
+
+    ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
+    (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
+#+end_src
+
+*** Better term-mode colors
+
+The =eterm-256color= package enhances the output of =term-mode= to enable handling of a wider range of color codes so that many popular terminal applications look as you would expect them to. Keep in mind that this package requires =ncurses=  to be installed on your machine so that it has access to the tic program. Most Linux distributions come with this program installed already so you may not have to do anything extra to use it.
+
+#+begin_src emacs-lisp
+  (use-package eterm-256color
+    :hook (term-mode . eterm-256color-mode))
+#+end_src
+
+*** ansi-term
+
+=ansi-term= is basically the same functionality as term-mode.
+The main, important difference between these two is that ansi-term allows to easly create multiple termianl buffers, when invoked multiple times, whereas in term-mode , such action requires the current term buffer to be renamed first (by e.g. =rename-uniquely=), as every new term buffer will be created with the same, default name.
+
+*** vterm
+
+=vterm= is an improved terminal emulator package which uses a =compiled native module= to interact with the underlying terminal applications. This enables it to be much faster than =term-mode= and to also provide a more complete terminal emulation experience.
+
+Make sure that you have the [[https://github.com/akermu/emacs-libvterm/#requirements][necessary dependancies]] installed before trying to use vterm because there is a module that will need to be compiled before you can use it successfully.
+
+#+begin_src emacs-lisp
+  (use-package vterm
+    :commands vterm
+    :config
+    (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")  ;; Set this to match your custom shell prompt
+    ;;(setq vterm-shell "zsh")                       ;; Set this to customize the shell to launch
+    (setq vterm-max-scrollback 10000))
+#+end_src
+
+*** Eshell
+
+Eshell is Emacs’ own shell implementation written in Emacs Lisp. It provides you with a cross-platform implementation (even on Windows!) of the common GNU utilities you would find on Linux and macOS (ls, rm, mv, grep, etc). It also allows you to call Emacs Lisp functions directly from the shell and you can even set up aliases (like aliasing vim to find-file). Eshell is also an Emacs Lisp REPL which allows you to evaluate full expressions at the shell.
+
+The downsides to Eshell are that it can be harder to configure than other packages due to the particularity of where you need to set some options for them to go into effect, the lack of shell completions (by default) for some useful things like Git commands, and that REPL programs sometimes don’t work as well. However, many of these limitations can be dealt with by good configuration and installing external packages, so don’t let that discourage you from trying it!
+
+Useful key bindings:
+- =C-c C-p / C-c C-n= - go back and forward in the buffer’s prompts (also [[ and ]] with evil-mode)
+- =M-p / M-n= - go back and forward in the input history
+- =C-c C-u= - delete the current input string backwards up to the cursor
+- =counsel-esh-history= - A searchable history of commands typed into Eshell
+
+#+begin_src emacs-lisp
+  (defun my/configure-eshell ()
+    ;; Save command history when commands are entered
+    (add-hook 'eshell-pre-command-hook 'eshell-save-some-history)
+
+    ;; Truncate buffer for performance
+    (add-to-list 'eshell-output-filter-functions 'eshell-truncate-buffer)
+
+    ;; Bind some useful keys for evil-mode
+    ;; (evil-define-key '(normal insert visual) eshell-mode-map (kbd "C-r") 'counsel-esh-history)
+    ;; (evil-define-key '(normal insert visual) eshell-mode-map (kbd "<home>") 'eshell-bol)
+    ;; (evil-normalize-keymaps)
+
+    (setq eshell-history-size         10000
+          eshell-buffer-maximum-lines 10000
+          ;; If a command was executen multiple times in a row, save in in history only once
+          eshell-hist-ignoredups t
+          eshell-scroll-to-bottom-on-input t))
+
+  (use-package eshell-git-prompt
+    :ensure t)
+
+  (use-package eshell
+    :hook (eshell-first-time-mode . my/configure-eshell)
+    :config
+
+    ;; Eshell is comprised of a series of packages, and sometimes you have to hook
+    ;; your configurtion after the load of a particular package so that it works correctly.
+    ;; esh-opt is one of those packages.
+    ;; This is one of those  oddities of configuration for eshell.
+    (with-eval-after-load 'esh-opt
+      (setq eshell-destroy-buffer-when-process-dies t)
+      ;; The commands blow will be in fact run in term-mode
+      ;; as those doesn't always works correctly on Eshell
+      (setq eshell-visual-commands '("ssh" "htop" "zsh" "vim")))
+
+      (eshell-git-prompt-use-theme 'powerline))
+#+end_src
+
+** go-translate
+
+[[https://github.com/lorniu/go-translate][GitHub page]] with a lot of useful info and configurations.
+
+In addition to Google Translate, it supports more engines like Google RPC API, Bing, DeepL. You can easily add other translation engines on the basis of the framework.
+
+Some functions:
+- =gts-do-transalate= - starts translating, will take =gts-default-translator= as the default translator
+
+In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, you can use:
+- =C-l= - to clear the input
+- =C-p / C-n= - to switch transaltion directions. These directions are those configured in gts-translate-list
+
+#+begin_src emacs-lisp
+  (use-package go-translate
+    :ensure t
+    :custom
+    ;; Confiugre language pairs used to transale
+    (gts-translate-list '(("en" "pl") ("pl" "en")))
+    ;; Configure the default transanslator (used by gts-do-transalte)
+    (gts-default-translator
+     (gts-translator
+      :picker (gts-prompt-picker)
+      :engines (list (gts-bing-engine) (gts-google-engine))
+      :render (gts-buffer-render))))
+
+  (defun my/translate-region ()
+    (interactive)
+    (gts-translate (gts-translator
+                    :picker (gts-noprompt-picker)
+                    :engines (list (gts-bing-engine) (gts-google-engine))
+                    :render (gts-buffer-render))))
+
+  (defun my/translate-region-pop-render ()
+    (interactive)
+    (gts-translate (gts-translator
+                    :picker (gts-prompt-picker)
+                    :engines (list (gts-bing-engine) (gts-google-engine))
+                    :render (gts-posframe-pop-render))))
+
+  (defun my/translate-region-pin-render ()
+    (interactive)
+    (gts-translate (gts-translator
+                    :picker (gts-prompt-picker)
+                    :engines (list (gts-bing-engine) (gts-google-engine))
+                    :render (gts-posframe-pin-render))))
+
+#+end_src
 
 ** command-log-mode
 

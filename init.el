@@ -554,6 +554,94 @@
 (use-package company-box
   :hook (company-mode . company-box-mode))
 
+(use-package term
+  :config
+  (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
+  ;;(setq explicit-zsh-args '())         ;; Use 'explicit-<shell>-args for shell-specific args
+
+  ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
+  (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
+
+(use-package eterm-256color
+  :hook (term-mode . eterm-256color-mode))
+
+(use-package vterm
+  :commands vterm
+  :config
+  (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")  ;; Set this to match your custom shell prompt
+  ;;(setq vterm-shell "zsh")                       ;; Set this to customize the shell to launch
+  (setq vterm-max-scrollback 10000))
+
+(defun my/configure-eshell ()
+  ;; Save command history when commands are entered
+  (add-hook 'eshell-pre-command-hook 'eshell-save-some-history)
+
+  ;; Truncate buffer for performance
+  (add-to-list 'eshell-output-filter-functions 'eshell-truncate-buffer)
+
+  ;; Bind some useful keys for evil-mode
+  ;; (evil-define-key '(normal insert visual) eshell-mode-map (kbd "C-r") 'counsel-esh-history)
+  ;; (evil-define-key '(normal insert visual) eshell-mode-map (kbd "<home>") 'eshell-bol)
+  ;; (evil-normalize-keymaps)
+
+  (setq eshell-history-size         10000
+        eshell-buffer-maximum-lines 10000
+        ;; If a command was executen multiple times in a row, save in in history only once
+        eshell-hist-ignoredups t
+        eshell-scroll-to-bottom-on-input t))
+
+(use-package eshell-git-prompt
+  :ensure t)
+
+(use-package eshell
+  :hook (eshell-first-time-mode . my/configure-eshell)
+  :config
+
+  ;; Eshell is comprised of a series of packages, and sometimes you have to hook
+  ;; your configurtion after the load of a particular package so that it works correctly.
+  ;; esh-opt is one of those packages.
+  ;; This is one of those  oddities of configuration for eshell.
+  (with-eval-after-load 'esh-opt
+    (setq eshell-destroy-buffer-when-process-dies t)
+    ;; The commands blow will be in fact run in term-mode
+    ;; as those doesn't always works correctly on Eshell
+    (setq eshell-visual-commands '("ssh" "htop" "zsh" "vim")))
+
+    (eshell-git-prompt-use-theme 'powerline))
+
+(use-package go-translate
+  :ensure t
+  :custom
+  ;; Confiugre language pairs used to transale
+  (gts-translate-list '(("en" "pl") ("pl" "en")))
+  ;; Configure the default transanslator (used by gts-do-transalte)
+  (gts-default-translator
+   (gts-translator
+    :picker (gts-prompt-picker)
+    :engines (list (gts-bing-engine) (gts-google-engine))
+    :render (gts-buffer-render))))
+
+(defun my/translate-region ()
+  (interactive)
+  (gts-translate (gts-translator
+                  :picker (gts-noprompt-picker)
+                  :engines (list (gts-bing-engine) (gts-google-engine))
+                  :render (gts-buffer-render))))
+
+(defun my/translate-region-pop-render ()
+  (interactive)
+  (gts-translate (gts-translator
+                  :picker (gts-prompt-picker)
+                  :engines (list (gts-bing-engine) (gts-google-engine))
+                  :render (gts-posframe-pop-render))))
+
+(defun my/translate-region-pin-render ()
+  (interactive)
+  (gts-translate (gts-translator
+                  :picker (gts-prompt-picker)
+                  :engines (list (gts-bing-engine) (gts-google-engine))
+                  :render (gts-posframe-pin-render))))
+
 (use-package command-log-mode
   :ensure t
   :bind (("C-c c t" . clm/toggle-command-log-buffer)
