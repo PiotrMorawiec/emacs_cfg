@@ -71,15 +71,6 @@
     (message "Active modes are %s" active-modes)))
 
 
-(defun my/term ()
-  "My custom term command."
-  (interactive)
-  (set-buffer (make-term "terminal" explicit-shell-file-name))
-  (term-mode)
-  (term-char-mode)
-  (switch-to-buffer "*terminal*"))
-
-
 (defun my/untabify-entire-buffer ()
   (interactive)
   (mark-whole-buffer)
@@ -193,8 +184,16 @@
 ;; Mouse behaviour
 (setq mouse-wheel-progressive-speed nil)
 
+;; Set frame transparency
+(set-frame-parameter (selected-frame) 'alpha '(92 . 92))
+(add-to-list 'default-frame-alist '(alpha . (92 . 92)))
+
 ;; Enable full screen
+(set-frame-parameter (selected-frame) 'fullscreen 'maximized)
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+;; Do not create backup files (with ~ suffix)
+(setq make-backup-files nil)
 
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -202,7 +201,7 @@
 (global-hl-line-mode 1)
 (set-face-background hl-line-face "gray13")
 
-(setq-default show-trailing-whitespace 1)
+(setq-default show-trailing-whitespace nil)
 (setq-default explicit-shell-file-name "/bin/bash")
 
 ;; ==============================================================
@@ -608,6 +607,13 @@
     (setq eshell-visual-commands '("ssh" "htop" "zsh" "vim")))
 
     (eshell-git-prompt-use-theme 'powerline))
+
+;; Set default connection mode to SSH
+(setq tramp-default-method "ssh")
+;; Set default user
+(setq tramp-default-user "pi")
+;; Set default host
+(setq tramp-default-host "192.168.1.5")
 
 (use-package go-translate
   :ensure t
