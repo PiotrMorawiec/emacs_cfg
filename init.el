@@ -1,6 +1,18 @@
 ;; -*- lexical-binding: t; -*-
 (message "Start reading ~/.emacs.d/init.el ...")
 
+;; The default is 800 kilobytes.  Measured in bytes.
+(setq gc-cons-threshold (* 50 1000 1000))
+
+(defun my/display-startup-time ()
+  (message "Emacs loaded in %s with %d garbage collections."
+           (format "%.2f seconds"
+                   (float-time
+                    (time-subtract after-init-time before-init-time)))
+           gcs-done))
+
+(add-hook 'emacs-startup-hook #'my/display-startup-time)
+
 ;; ==============================================================
 ;; CUSTOM FUNCTIONS
 ;; ==============================================================
@@ -19,8 +31,8 @@
 
 (defun my/duplicate-current-line-or-region (arg)
   "Duplicates the current line or region ARG times.
-      If there's no region, the current line will be duplicated. However, if
-      there's a region, all lines that region covers will be duplicated."
+          If there's no region, the current line will be duplicated. However, if
+          there's a region, all lines that region covers will be duplicated."
   (interactive "p")
   (let (beg end (origin (point)))
     (if (and mark-active (> (point) (mark)))
@@ -106,7 +118,7 @@
 
 (defun my/other-window-kill-buffer ()
   "Function woks when there are multiple windows opened in the current frame.
-   Kills the currently opened buffer in all the other windows"
+       Kills the currently opened buffer in all the other windows"
   (interactive)
   ;; Window selection is used because point goes to a different window
   ;; if more than 2 windows are present
@@ -128,7 +140,7 @@
 ;; https://stackoverflow.com/questions/1687620/regex-match-everything-but-specific-pattern
 (defun my/kill-asterisk-buffers ()
   "Kill all buffers whose names start with an asterisk (‘*’).
-   By convention, those buffers are not associated with files."
+       By convention, those buffers are not associated with files."
   (interactive)
   (kill-matching-buffers "*" nil t)
   (message "All asterisk (*) buffers have been killed"))
@@ -253,6 +265,18 @@
         (setq spacemacs-theme-comment-italic t)
   :init (load-theme 'spacemacs-dark t))
 
+;; You will most likely need to adjust this font size for your system!
+(defvar my/default-font-size 130)
+(defvar my/default-variable-font-size 130)
+
+(set-face-attribute 'default nil :font "Fira Code Retina" :height my/default-font-size)
+
+;; Set the fixed pitch face
+(set-face-attribute 'fixed-pitch nil :font "Fira Code Retina" :height my/default-font-size)
+
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Cantarell" :height my/default-variable-font-size :weight 'regular)
+
 (use-package dashboard
   :ensure t
   :diminish dashboard-mode
@@ -263,39 +287,55 @@
   (setq dashboard-set-heading-icons t)
   (setq dashboard-set-file-icons t)
   (setq dashboard-set-footer nil)
-  (setq dashboard-items '((projects  . 5)
-                          (bookmarks . 5)
-			  (agenda    . 5)))
+  (setq dashboard-items '((projects  . 3)
+                          (agenda    . 3)
+                          (bookmarks . 3)))
   (dashboard-setup-startup-hook))
 
 ;; ==============================================================
 ;; PACKAGES
 ;; ==============================================================
 
-(defun my/org-mode-setup ()
-  (interactive)
-  (org-indent-mode)
-  (variable-pitch-mode 1) ;; < what is that ?
-  ;; Enable text wrapping in org-mode (it looks better when side piddings enbaled)
-  (visual-line-mode 1))
-
 (defun my/org-font-setup ()
-  (interactive)
   ;; Replace list hyphen with dot
   (font-lock-add-keywords 'org-mode
                           '(("^ *\\([-]\\) "
-                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•")))))))
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
+  ;; Set faces for heading levels
+  (dolist (face '((org-level-1 . 1.2)
+                  (org-level-2 . 1.1)
+                  (org-level-3 . 1.05)
+                  (org-level-4 . 1.0)
+                  (org-level-5 . 1.1)
+                  (org-level-6 . 1.1)
+                  (org-level-7 . 1.1)
+                  (org-level-8 . 1.1)))
+    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
 
-(defun my/org-mode-visual-fill ()
-  "Function imposes left and right side paddings in org-mode"
+  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+  (set-face-attribute 'org-block nil    :foreground nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-table nil    :inherit 'fixed-pitch)
+  (set-face-attribute 'org-formula nil  :inherit 'fixed-pitch)
+  (set-face-attribute 'org-code nil     :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-table nil    :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-checkbox nil  :inherit 'fixed-pitch)
+  (set-face-attribute 'line-number nil :inherit 'fixed-pitch)
+  (set-face-attribute 'line-number-current-line nil :inherit 'fixed-pitch))
+
+(defun my/org-mode-setup ()
   (interactive)
-  (setq visual-fill-column-width 100
-        visual-fill-column-center-text t)
-  (visual-fill-column-mode 1))
+  (org-indent-mode)
+  (variable-pitch-mode 1)
+  ;; Enable text wrapping in org-mode (it looks better when side piddings enbaled)
+  (visual-line-mode 1))
 
 (use-package org
   :ensure t
+  :hook (org-mode . my/org-mode-setup)
   :config
   (setq org-ellipsis " ▾")
   ;; start org-agenda in log-mode by default (like if 'a' option was chosen)
@@ -308,43 +348,27 @@
   (setq org-log-into-drawer t)
   (my/org-font-setup))
 
-;; Package that allows left/right side padding in org mode
-(use-package visual-fill-column
-  :defer t)
-
-(add-hook 'org-mode-hook #'my/org-mode-setup)
-(add-hook 'org-mode-hook #'my/org-mode-visual-fill)
-
-(dolist (face '((org-level-1 . 1.2)
-                (org-level-2 . 1.1)
-                (org-level-3 . 1.05)
-                (org-level-4 . 1.0)
-                (org-level-5 . 1.1)
-                (org-level-6 . 1.1)
-                (org-level-7 . 1.1)
-                (org-level-8 . 1.1))))
-
-;; Ensure that anything that should be fixed-pitch in Org files appears that way
-(set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
-(set-face-attribute 'org-code nil :inherit '(shadow fixed-pitch))
-(set-face-attribute 'org-table nil :inherit '(shadow fixed-pitch))
-(set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
-(set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
-(set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
-(set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
-
-(set-face-attribute 'default nil :height 120)
-
 ;; Bind certain org emphasis functionalities to certain keys
 (setq org-emphasis-alist
       (quote (("*" bold)
-              ("/" italic)
-              ("_" underline)
-              ("=" (:foreground "orange" :background inherit))
-              ("~" org-verbatim verbatim)
-              ("+"
-               (:strike-through t))
-              )))
+	      ("/" italic)
+	      ("_" underline)
+	      ("=" (:foreground "orange" :background inherit))
+	      ("~" org-verbatim verbatim)
+	      ("+"
+	       (:strike-through t))
+	      )))
+
+(defun my/org-mode-visual-fill ()
+  "Function imposes left and right side paddings in org-mode"
+  (interactive)
+  (setq visual-fill-column-width 100
+	visual-fill-column-center-text t)
+  (visual-fill-column-mode 1))
+
+;; Package that allows left/right side padding in org mode
+(use-package visual-fill-column
+  :hook (org-mode . my/org-mode-visual-fill))
 
 (use-package org-bullets
   :ensure t
@@ -589,6 +613,8 @@
         eshell-hist-ignoredups t
         eshell-scroll-to-bottom-on-input t))
 
+;; This package loads fancy eshell prompts for GIT users
+;; To set given prompt, type M-x eshell-git-prompt-use-theme
 (use-package eshell-git-prompt
   :ensure t)
 
@@ -614,6 +640,44 @@
 (setq tramp-default-user "pi")
 ;; Set default host
 (setq tramp-default-host "192.168.1.5")
+
+(use-package dired
+  :ensure nil ;; dires is a built-in emacs package, so don't look for it in package repositories
+  :commands (dired dired-jump) ;; defer this config until one of this commands is executed
+  :bind (("C-x j" . dired-jump)
+         ;; those bindings will only be valid if dired-mode is active
+         :map dired-mode-map
+         ;; change this from ^ which is not convenient 
+         ("<C-backspace>" . dired-up-directory)
+         ;; this one is a default keybinding, keep it here as an information tough
+         ("v" . dired-view-file))
+  :custom ((dired-listing-switches "-agho --group-directories-first"))
+  )
+
+;; Thanks to this package, the directories that we've visited won't be existing as opened buffers.
+;; Instead, all these buffers will be closed automatically.
+(use-package dired-single
+  :commands (dired dired-jump)
+  :bind (:map dired-mode-map
+              ("<C-return>" . dired-single-up-directory)
+              ("<return>" . dired-single-buffer)))
+
+(use-package all-the-icons-dired
+  :hook (dired-mode . all-the-icons-dired-mode))
+
+;; This package allow us to set a program different than Emacs, that we want to open given files with
+(use-package dired-open
+  :commands (dired dired-jump)
+  :config
+  ;; Doesn't work as expected!
+  ;;(add-to-list 'dired-open-functions #'dired-open-xdg t)
+  (setq dired-open-extensions '(("png" . "gwenview")
+                                ("jpg" . "gwenview"))))
+
+(use-package dired-hide-dotfiles
+  :hook (dired-mode . dired-hide-dotfiles-mode)
+  :config
+  :bind (:map dired-mode-map ("h" . dired-hide-dotfiles-mode)))
 
 (use-package go-translate
   :ensure t
