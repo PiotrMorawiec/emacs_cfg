@@ -17,22 +17,41 @@
 ;; CUSTOM FUNCTIONS
 ;; ==============================================================
 
+(defun my/revert-buffer ()
+  "Revert buffer without confirmation."
+  (interactive) (revert-buffer t t))
+
+(defun my/kill-thing-at-point (thing)
+  "Kill the `thing-at-point' for the specified kind of THING."
+  (let ((bounds (bounds-of-thing-at-point thing)))
+    (if bounds
+        (kill-region (car bounds) (cdr bounds))
+      (error "No %s at point" thing))))
+
+(defun my/kill-word-at-point ()
+  "Kill the word at point."
+  (interactive)
+  (my/kill-thing-at-point 'word))
+
+(defun my/kill-sentence-at-point ()
+  "Kill the sentence at point."
+  (interactive)
+  (my/kill-thing-at-point 'sentence))
+
 (defun my/scroll-half-page-down ()
   "scroll down half the page"
   (interactive)
   (scroll-down (/ (window-body-height) 2)))
-
 
 (defun my/scroll-half-page-up ()
   "scroll up half the page"
   (interactive)
   (scroll-up (/ (window-body-height) 2)))
 
-
 (defun my/duplicate-current-line-or-region (arg)
   "Duplicates the current line or region ARG times.
-          If there's no region, the current line will be duplicated. However, if
-          there's a region, all lines that region covers will be duplicated."
+            If there's no region, the current line will be duplicated. However, if
+            there's a region, all lines that region covers will be duplicated."
   (interactive "p")
   (let (beg end (origin (point)))
     (if (and mark-active (> (point) (mark)))
@@ -48,7 +67,6 @@
         (insert region)
         (setq end) (point))
       (goto-char (+ origin (* (length region) arg) arg)))))
-
 
 (defun my/toggle-highlight-trailing-whitespaces ()
   "Function toggles highlighting trailing whitespaces"
@@ -70,7 +88,6 @@
     (progn (message "Enable 'idle-highlight-mode'")
            (setq-default idle-highlight-mode t))))
 
-
 (defun my/which-active-modes ()
   "Give a message of which minor modes are enabled in the current buffer."
   (interactive)
@@ -82,7 +99,6 @@
           minor-mode-list)
     (message "Active modes are %s" active-modes)))
 
-
 (defun my/untabify-entire-buffer ()
   (interactive)
   (mark-whole-buffer)
@@ -90,12 +106,10 @@
   (message "Converting all TAB's to spaces")
   (keyboard-quit))
 
-
 (defun my/open-init-file ()
   (interactive)
   (find-file "~/.emacs.d/init.el")
   (message "Init file opened"))
-
 
 ;; Function copied from Emacs Wiki (https://www.emacswiki.org/emacs/KillingBuffers)
 (defun my/close-and-kill-this-pane ()
@@ -115,10 +129,9 @@
   (if (not (one-window-p))
       (delete-window)))
 
-
 (defun my/other-window-kill-buffer ()
   "Function woks when there are multiple windows opened in the current frame.
-       Kills the currently opened buffer in all the other windows"
+         Kills the currently opened buffer in all the other windows"
   (interactive)
   ;; Window selection is used because point goes to a different window
   ;; if more than 2 windows are present
@@ -128,23 +141,20 @@
     (kill-this-buffer)
     (select-window win-curr)))
 
-
 (defun my/kill-other-buffers ()
   "Kill all other buffers except the active buffer."
   (interactive)
   (mapc 'kill-buffer
         (delq (current-buffer) (buffer-list))))
 
-
 ;; TODO: prevent function from removing *Messages buffer
 ;; https://stackoverflow.com/questions/1687620/regex-match-everything-but-specific-pattern
 (defun my/kill-asterisk-buffers ()
   "Kill all buffers whose names start with an asterisk (‘*’).
-       By convention, those buffers are not associated with files."
+         By convention, those buffers are not associated with files."
   (interactive)
   (kill-matching-buffers "*" nil t)
   (message "All asterisk (*) buffers have been killed"))
-
 
 (defun my/reinstall-all-activated-packages ()
   "Refresh and reinstall all activated packages."
@@ -287,9 +297,8 @@
   (setq dashboard-set-heading-icons t)
   (setq dashboard-set-file-icons t)
   (setq dashboard-set-footer nil)
-  (setq dashboard-items '((projects  . 3)
-                          (agenda    . 3)
-                          (bookmarks . 3)))
+  (setq dashboard-items '((projects  . 5)
+                          (agenda    . 3)))
   (dashboard-setup-startup-hook))
 
 ;; ==============================================================
@@ -1000,7 +1009,7 @@
 (global-set-key (kbd "M-v")        #'my/scroll-half-page-down)
 (global-set-key (kbd "C-v")        #'my/scroll-half-page-up)
 
-(global-set-key (kbd "<f5>")       #'revert-buffer)
+(global-set-key (kbd "<f5>")       #'my/revert-buffer)
 (global-set-key (kbd "<f6>")       #'my/kill-asterisk-buffers)
 (global-set-key (kbd "<f9>")       #'minimap-mode)
 (global-set-key (kbd "<f12>")      #'xref-find-definitions)
@@ -1011,20 +1020,22 @@
 (global-set-key (kbd "C-x 0")      #'kill-buffer-and-window)
 (global-set-key (kbd "C-c d")      #'my/duplicate-current-line-or-region)
 (global-set-key (kbd "C-c k")      #'kill-whole-line)
+(global-set-key (kbd "C-c l")      #'my/kill-word-at-point)
+(global-set-key (kbd "C-c s")      #'my/kill-sentence-at-point)
 (global-set-key (kbd "C-c x")      #'delete-trailing-whitespace)
 (global-set-key (kbd "C-c w")      #'my/toggle-highlight-trailing-whitespaces)
 (global-set-key (kbd "C-c h")      #'my/toggle-idle-highlight-mode)
-(global-set-key (kbd "C-c C-e")   #'eval-region)
-(global-set-key (kbd "C-c t")       #'my/untabify-entire-buffer)
+(global-set-key (kbd "C-c C-e")    #'eval-region)
+(global-set-key (kbd "C-c t")      #'my/untabify-entire-buffer)
 
 (global-set-key (kbd "C-c o i")    #'my/open-init-file)
-(global-set-key (kbd "C-c o a")   #'org-agenda-list)
+(global-set-key (kbd "C-c o a")    #'org-agenda-list)
 
-(global-set-key (kbd "C-c p r")     #'helm-projectile-recentf)
+(global-set-key (kbd "C-c p r")    #'helm-projectile-recentf)
 (global-set-key (kbd "C-c p R")    #'projectile-replace)
 (global-set-key (kbd "C-c p x")    #'projectile-replace-regexp)
-(global-set-key (kbd "C-,")          #'helm-projectile-grep)
-(global-set-key (kbd "C-.")          #'helm-projectile-ag)
+(global-set-key (kbd "C-,")        #'helm-projectile-grep)
+(global-set-key (kbd "C-.")        #'helm-projectile-ag)
 
 (define-key helm-map (kbd "TAB")   #'helm-execute-persistent-action)
 (define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
