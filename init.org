@@ -194,7 +194,7 @@ Print start-of-configuration message, and set lexical binding for the init file.
   ;; ==============================================================
   ;; BASIC UI CONFIG
   ;; ==============================================================
-  
+
   ;; Set startup screen photo
   ;; (setq fancy-splash-image "path")
 
@@ -219,7 +219,7 @@ Print start-of-configuration message, and set lexical binding for the init file.
   (global-auto-revert-mode t)
 
 
-  ;; How to get colors in temrinal Emacs ?
+  ;; How to get colors in terminal Emacs ?
   ;; https://www.gnu.org/software/emacs/manual/html_mono/efaq.html#Colors-on-a-TTY
 
   ;; Mouse behaviour
@@ -330,8 +330,8 @@ Debian / Ubuntu packages:
 - =texlive-fonts-extra= (rather for LaTeX)
 
 Fixed Pitch vs Variable Pitch:
-- =fixed-pitch= fonts - fonts whose characters (letters and spacings) always occupy the same amount of horizontal space (have the same widths). 
-- =variable-pitch= fonts = fonts whose characters (letters and spacings) may occupy different amount of horizontal space (may have different widths). This kind of fonts looks more raw, and are well suited for document-looking texts.
+- =fixed-pitch= fonts - fonts whose characters (letters and spacings) always occupy the same amount of horizontal space (have the same widths).
+- =variable-pitch= fonts - fonts whose characters (letters and spacings) may occupy different amount of horizontal space (may have different widths). This kind of fonts looks more raw, and are well suited for document-looking texts.
 
 #+begin_src emacs-lisp
   ;; You will most likely need to adjust this font size for your system!
@@ -374,6 +374,19 @@ Fixed Pitch vs Variable Pitch:
   ;; ==============================================================
 #+end_src
 
+** all-the-icons
+
+#+begin_src emacs-lisp
+  (use-package all-the-icons
+    :ensure t)
+
+  ;; This should be invoked on a given machine only once
+  ;; (all-the-icons-install-fonts)
+
+  ;; Test all-the-icons package with executing (C-x C-e)
+  ;; (all-the-icons-insert-alltheicon)
+#+end_src
+
 ** Org Mode
 
 *** Font Faces
@@ -381,35 +394,36 @@ Fixed Pitch vs Variable Pitch:
 The =my/org-font-setup= function configures various text faces to tweak the sizes of headings and use variable width fonts (=variable-pitch=) in most cases so that it looks more like we’re editing a document in org-mode. We switch back to fixed width (monospace / =fixed-picth=) fonts for code blocks and tables so that they display correctly.
 
 #+begin_src emacs-lisp
-(defun my/org-font-setup ()
-  ;; Replace list hyphen with dot
-  (font-lock-add-keywords 'org-mode
-                          '(("^ *\\([-]\\) "
-                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+  (defun my/org-font-setup ()
+    ;; Replace list hyphen with dot
+    (font-lock-add-keywords 'org-mode
+                            '(("^ *\\([-]\\) "
+                               (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
-  ;; Set faces for heading levels
-  (dolist (face '((org-level-1 . 1.2)
-                  (org-level-2 . 1.1)
-                  (org-level-3 . 1.05)
-                  (org-level-4 . 1.0)
-                  (org-level-5 . 1.1)
-                  (org-level-6 . 1.1)
-                  (org-level-7 . 1.1)
-                  (org-level-8 . 1.1)))
-    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+    ;; Set faces for heading levels
+    (dolist (face '((org-level-1 . 1.2)
+                    (org-level-2 . 1.1)
+                    (org-level-3 . 1.05)
+                    (org-level-4 . 1.0)
+                    (org-level-5 . 1.1)
+                    (org-level-6 . 1.1)
+                    (org-level-7 . 1.1)
+                    (org-level-8 . 1.1)))
+      (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
 
-  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
-  (set-face-attribute 'org-block nil    :foreground nil :inherit 'fixed-pitch)
-  (set-face-attribute 'org-table nil    :inherit 'fixed-pitch)
-  (set-face-attribute 'org-formula nil  :inherit 'fixed-pitch)
-  (set-face-attribute 'org-code nil     :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-table nil    :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-checkbox nil  :inherit 'fixed-pitch)
-  (set-face-attribute 'line-number nil :inherit 'fixed-pitch)
-  (set-face-attribute 'line-number-current-line nil :inherit 'fixed-pitch))
+    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+    (set-face-attribute 'org-block nil    :foreground nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-table nil    :inherit 'fixed-pitch)
+    (set-face-attribute 'org-formula nil  :inherit 'fixed-pitch)
+    (set-face-attribute 'org-code nil     :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-table nil    :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-checkbox nil  :inherit 'fixed-pitch)
+    (set-face-attribute 'line-number nil :inherit 'fixed-pitch)
+    (set-face-attribute 'line-number-current-line nil :inherit 'fixed-pitch)
+    )
 #+end_src
 
 *** Common config
@@ -418,6 +432,8 @@ The =my/org-font-setup= function configures various text faces to tweak the size
   (defun my/org-mode-setup ()
     (interactive)
     (org-indent-mode)
+    ;; Turn on variable-pitch mode in org buffers.
+    ;; That will make all the fonts which were not explicitly set to fixed-pitch, to be variable-pitch
     (variable-pitch-mode 1)
     ;; Enable text wrapping in org-mode (it looks better when side piddings enbaled)
     (visual-line-mode 1))
@@ -429,7 +445,7 @@ The =my/org-font-setup= function configures various text faces to tweak the size
     (setq org-ellipsis " ▾")
     ;; start org-agenda in log-mode by default (like if 'a' option was chosen)
     (setq org-agenda-start-with-log-mode t)
-    ;; whenever task is DONE - add information (log) about when the tash has been finished
+    ;; whenever task is DONE - add information (log) about when the task has been finished
     (setq org-log-done 'time)
     ;; Hide org emphasis characters, like *, =, -, + etc.
     (setq org-hide-emphasis-markers t)
@@ -683,10 +699,8 @@ This snippet adds a hook to =org-mode= buffers so that =my/org-babel-tangle-conf
     :custom
     (global-flycheck-mode nil))
 
-
   (use-package lsp-treemacs
     :after (lsp treemacs))
-
 
   (use-package helm-lsp
     :after (lsp helm))
@@ -838,6 +852,15 @@ The method sg stands for “switch group”; the changed group must be used here
 *Combining ssh or plink with su or sudo*
 If the su or sudo option shall be performed on another host, it could be comnbined with a leading ssh or plink option. That means, TRAMP connects first to the other host with non-administrative credentials, and changes to administrative credentials on that host afterwards. In a simple case, the syntax looks like /ssh:user@host|sudo::/path/to/file.
 
+*Tramp prompt issue explanation* (solution works !):
+https://emacs.stackexchange.com/questions/24159/tramp-waiting-for-prompts-from-remote-shell
+
+*Using magit with TRAMP*
+Magit requires at least GIR 2.2.0 in order to work.
+If git version is configured by Environment Modules (module load ...), then Emacs may not be aware of this, as there will be still an obsolete GIT version available through the PATH variable.
+In order to overcome this, you can customize the remote git executable, and set it directly in =magit-remote-git-executable=.
+
+
 #+begin_src emacs-lisp
   ;; Set default connection mode to SSH
   (setq tramp-default-method "ssh")
@@ -872,8 +895,9 @@ In Dired, you're going to be using selections for files you want to work on. In 
 
  - =m= - Marks a file
  - =u= - Unmarks a file
+ - =backspace= - Unmarks a file (from down to top)
  - =U= - Unmarks all files in buffer
- -  =t / t= - Inverts marked files in buffer
+ - =t / t= - Inverts marked files in buffer
  - =% m= - Mark files in buffer using regular expression
  - =*= - Lots of other auto-marking functions
  - =k / K= - “Kill” marked items (refresh buffer with g / g r to get them back)
@@ -921,7 +945,7 @@ In Dired, you're going to be using selections for files you want to work on. In 
     :bind (("C-x j" . dired-jump)
            ;; those bindings will only be valid if dired-mode is active
            :map dired-mode-map
-           ;; change this from ^ which is not convenient 
+           ;; change this from ^ which is not convenient
            ("<C-backspace>" . dired-up-directory)
            ;; this one is a default keybinding, keep it here as an information tough
            ("v" . dired-view-file))
@@ -931,15 +955,16 @@ In Dired, you're going to be using selections for files you want to work on. In 
   ;; Thanks to this package, the directories that we've visited won't be existing as opened buffers.
   ;; Instead, all these buffers will be closed automatically.
   (use-package dired-single
+    :after (dired)
     :commands (dired dired-jump)
     :bind (:map dired-mode-map
                 ("<C-return>" . dired-single-up-directory)
-                ("<return>" . dired-single-buffer)))
+                ("<return>"   . dired-single-buffer)))
 
-  (use-package all-the-icons-dired
-    :hook (dired-mode . all-the-icons-dired-mode))
+  ;; This package has been replaced with "treemacs-icons-dired"
+  ;; (use-package all-the-icons-dired)
 
-  ;; This package allow us to set a program different than Emacs, that we want to open given files with
+  ;;  This package allow us to set a program different than Emacs, that we want to open given files with
   (use-package dired-open
     :commands (dired dired-jump)
     :config
@@ -950,13 +975,9 @@ In Dired, you're going to be using selections for files you want to work on. In 
 
   (use-package dired-hide-dotfiles
     :hook (dired-mode . dired-hide-dotfiles-mode)
-    :config
     :bind (:map dired-mode-map ("h" . dired-hide-dotfiles-mode)))
 
-
-
 #+end_src
-
 
 ** go-translate
 
@@ -1085,13 +1106,6 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
     :ensure t)
 #+end_src
 
-** all-the-icons
-
-#+begin_src emacs-lisp
-  (use-package all-the-icons
-    :ensure t)
-#+end_src
-
 ** doom-modeline, keycast
 
 #+begin_src emacs-lisp
@@ -1201,11 +1215,6 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
     :after (treemacs projectile)
     :ensure t)
 
-  (use-package treemacs-icons-dired
-    :after (treemacs dired)
-    :ensure t
-    :config (treemacs-icons-dired-mode 1))
-
   (use-package treemacs-magit
     :after (treemacs magit)
     :ensure t)
@@ -1213,6 +1222,10 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
   (use-package treemacs-all-the-icons
     :ensure t
     :after (treemacs all-the-icons))
+  
+  (use-package treemacs-icons-dired
+    :ensure t
+    :hook (dired-mode . treemacs-icons-dired-enable-once))
 #+end_src
 
 ** helm
@@ -1240,10 +1253,21 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
     (helm-mode 1)
     (helm-autoresize-mode 1))
 
+  ;; Ned to apply these changes in order to make "helm-icons" work together with dired buffers:
+  ;; - thread: https://github.com/yyoncho/helm-icons/issues/16
+  ;; - code changes: https://github.com/yyoncho/helm-icons/pull/17/commits/eead11e9bdb2b8f3e1c7464953cc5ca70388f564
+  (use-package helm-icons
+    :ensure t
+    :after (all-the-icons helm)
+    :custom
+    (helm-icons-provider 'all-the-icons)
+    :config
+    (helm-icons-enable))
+
   (use-package helm-swoop
     :ensure t
     :bind
-    (("M-s"     . helm-swoop))
+    (("M-s". helm-swoop))
     :custom
     ;; This decreases helm swoop speed but in favour of colorded results
     (helm-swoop-speed-or-color t)
@@ -1270,6 +1294,7 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
 
   (use-package helm-ag
     :ensure t)
+
 #+end_src
 
 ** minimap
@@ -1327,10 +1352,6 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
                      (setq python-indent-offset 4)))
     :custom
     (python-shell-interpreter "python3"))
-
-  ;; (use-package pyvenv
-  ;;   :config
-  ;;   (pyvenv-mode 1))
 #+end_src
 
 ** paredit

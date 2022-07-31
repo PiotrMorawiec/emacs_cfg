@@ -190,7 +190,7 @@
 (global-auto-revert-mode t)
 
 
-;; How to get colors in temrinal Emacs ?
+;; How to get colors in terminal Emacs ?
 ;; https://www.gnu.org/software/emacs/manual/html_mono/efaq.html#Colors-on-a-TTY
 
 ;; Mouse behaviour
@@ -296,6 +296,15 @@
 ;; PACKAGES
 ;; ==============================================================
 
+(use-package all-the-icons
+  :ensure t)
+
+;; This should be invoked on a given machine only once
+;; (all-the-icons-install-fonts)
+
+;; Test all-the-icons package with executing (C-x C-e)
+;; (all-the-icons-insert-alltheicon)
+
 (defun my/org-font-setup ()
   ;; Replace list hyphen with dot
   (font-lock-add-keywords 'org-mode
@@ -324,11 +333,14 @@
   (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
   (set-face-attribute 'org-checkbox nil  :inherit 'fixed-pitch)
   (set-face-attribute 'line-number nil :inherit 'fixed-pitch)
-  (set-face-attribute 'line-number-current-line nil :inherit 'fixed-pitch))
+  (set-face-attribute 'line-number-current-line nil :inherit 'fixed-pitch)
+  )
 
 (defun my/org-mode-setup ()
   (interactive)
   (org-indent-mode)
+  ;; Turn on variable-pitch mode in org buffers.
+  ;; That will make all the fonts which were not explicitly set to fixed-pitch, to be variable-pitch
   (variable-pitch-mode 1)
   ;; Enable text wrapping in org-mode (it looks better when side piddings enbaled)
   (visual-line-mode 1))
@@ -340,7 +352,7 @@
   (setq org-ellipsis " ▾")
   ;; start org-agenda in log-mode by default (like if 'a' option was chosen)
   (setq org-agenda-start-with-log-mode t)
-  ;; whenever task is DONE - add information (log) about when the tash has been finished
+  ;; whenever task is DONE - add information (log) about when the task has been finished
   (setq org-log-done 'time)
   ;; Hide org emphasis characters, like *, =, -, + etc.
   (setq org-hide-emphasis-markers t)
@@ -549,10 +561,8 @@
   :custom
   (global-flycheck-mode nil))
 
-
 (use-package lsp-treemacs
   :after (lsp treemacs))
-
 
 (use-package helm-lsp
   :after (lsp helm))
@@ -647,7 +657,7 @@
   :bind (("C-x j" . dired-jump)
          ;; those bindings will only be valid if dired-mode is active
          :map dired-mode-map
-         ;; change this from ^ which is not convenient 
+         ;; change this from ^ which is not convenient
          ("<C-backspace>" . dired-up-directory)
          ;; this one is a default keybinding, keep it here as an information tough
          ("v" . dired-view-file))
@@ -657,15 +667,16 @@
 ;; Thanks to this package, the directories that we've visited won't be existing as opened buffers.
 ;; Instead, all these buffers will be closed automatically.
 (use-package dired-single
+  :after (dired)
   :commands (dired dired-jump)
   :bind (:map dired-mode-map
               ("<C-return>" . dired-single-up-directory)
-              ("<return>" . dired-single-buffer)))
+              ("<return>"   . dired-single-buffer)))
 
-(use-package all-the-icons-dired
-  :hook (dired-mode . all-the-icons-dired-mode))
+;; This package has been replaced with "treemacs-icons-dired"
+;; (use-package all-the-icons-dired)
 
-;; This package allow us to set a program different than Emacs, that we want to open given files with
+;;  This package allow us to set a program different than Emacs, that we want to open given files with
 (use-package dired-open
   :commands (dired dired-jump)
   :config
@@ -676,7 +687,6 @@
 
 (use-package dired-hide-dotfiles
   :hook (dired-mode . dired-hide-dotfiles-mode)
-  :config
   :bind (:map dired-mode-map ("h" . dired-hide-dotfiles-mode)))
 
 (use-package go-translate
@@ -762,9 +772,6 @@
 (use-package xref
   :ensure t)
 
-(use-package all-the-icons
-  :ensure t)
-
 (use-package doom-modeline
   :after (all-the-icons)
   :ensure t
@@ -847,11 +854,6 @@
   :after (treemacs projectile)
   :ensure t)
 
-(use-package treemacs-icons-dired
-  :after (treemacs dired)
-  :ensure t
-  :config (treemacs-icons-dired-mode 1))
-
 (use-package treemacs-magit
   :after (treemacs magit)
   :ensure t)
@@ -859,6 +861,10 @@
 (use-package treemacs-all-the-icons
   :ensure t
   :after (treemacs all-the-icons))
+
+(use-package treemacs-icons-dired
+  :ensure t
+  :hook (dired-mode . treemacs-icons-dired-enable-once))
 
 (use-package helm
   :ensure t
@@ -882,10 +888,21 @@
   (helm-mode 1)
   (helm-autoresize-mode 1))
 
+;; Ned to apply these changes in order to make "helm-icons" work together with dired buffers:
+;; - thread: https://github.com/yyoncho/helm-icons/issues/16
+;; - code changes: https://github.com/yyoncho/helm-icons/pull/17/commits/eead11e9bdb2b8f3e1c7464953cc5ca70388f564
+(use-package helm-icons
+  :ensure t
+  :after (all-the-icons helm)
+  :custom
+  (helm-icons-provider 'all-the-icons)
+  :config
+  (helm-icons-enable))
+
 (use-package helm-swoop
   :ensure t
   :bind
-  (("M-s"     . helm-swoop))
+  (("M-s". helm-swoop))
   :custom
   ;; This decreases helm swoop speed but in favour of colorded results
   (helm-swoop-speed-or-color t)
@@ -957,10 +974,6 @@
                    (setq python-indent-offset 4)))
   :custom
   (python-shell-interpreter "python3"))
-
-;; (use-package pyvenv
-;;   :config
-;;   (pyvenv-mode 1))
 
 ;; (use-package paredit
 ;;   :ensure t
