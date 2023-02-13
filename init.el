@@ -4,6 +4,8 @@
 ;; The default is 800 kilobytes.  Measured in bytes.
 (setq gc-cons-threshold (* 50 1000 1000))
 
+(setq read-process-output-max (* 1024 1024))
+
 (defun my/display-startup-time ()
   (message "Emacs loaded in %s with %d garbage collections."
            (format "%.2f seconds"
@@ -176,9 +178,6 @@
 ;; BASIC UI CONFIG
 ;; ==============================================================
 
-;; Set startup screen photo
-;; (setq fancy-splash-image "path")
-
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
@@ -189,7 +188,7 @@
 (column-number-mode 1)
 
 ;; Enable / disable displaying LR/CR characters
-;; (global-whitespace-mode nil)
+(global-whitespace-mode nil)
 
 ;; Enable mouse support in terminal Emacs
 (xterm-mouse-mode 1)
@@ -297,7 +296,8 @@
   (setq dashboard-set-heading-icons t)
   (setq dashboard-set-file-icons t)
   (setq dashboard-set-footer nil)
-  (setq dashboard-items '((projects  . 5)
+  (setq dashboard-items '((projects  . 3)
+                          (recents   . 3 )
                           (agenda    . 3)))
   (dashboard-setup-startup-hook))
 
@@ -309,7 +309,8 @@
   :ensure t)
 
 ;; This should be invoked on a given machine only once
-;; (all-the-icons-install-fonts)
+(unless (member "all-the-icons" (font-family-list))
+  (all-the-icons-install-fonts t))
 
 ;; Test all-the-icons package with executing (C-x C-e)
 ;; (all-the-icons-insert-alltheicon)
@@ -596,6 +597,9 @@
 (use-package company-box
   :hook (company-mode . company-box-mode))
 
+(use-package evil-nerd-commenter
+  :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+
 (use-package term
   :config
   (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
@@ -656,9 +660,9 @@
 ;; Set default connection mode to SSH
 (setq tramp-default-method "ssh")
 ;; Set default user
-(setq tramp-default-user "pi")
+(setq tramp-default-user "pmorawie")
 ;; Set default host
-(setq tramp-default-host "192.168.1.5")
+(setq tramp-default-host "oulnxc77.emea.nsn-net.net")
 
 (use-package dired
   :ensure nil ;; dires is a built-in emacs package, so don't look for it in package repositories
@@ -804,10 +808,10 @@
 ;;   (add-to-list 'global-mode-string '("" mode-line-keycast " "))
 ;;   (keycast-mode nil))
 
-(use-package auto-complete
-  :ensure t
-  :config
-  (global-auto-complete-mode t))
+;; (use-package auto-complete
+;;   :ensure t
+;;   :config
+;;   (global-auto-complete-mode t))
 
 (use-package recentf
   :config
@@ -868,8 +872,8 @@
   :ensure t)
 
 (use-package treemacs-all-the-icons
-  :ensure t
-  :after (treemacs all-the-icons))
+  :after (treemacs all-the-icons)
+  :ensure t)
 
 (use-package treemacs-icons-dired
   :ensure t
@@ -923,9 +927,12 @@
 (use-package helm-xref
   :ensure t
   :after helm
-  :commands helm-xref
-  :config
-  (setq xref-show-xrefs-function 'helm-xref-show-xrefs))
+  :commands helm-xref)
+
+  ;; Poniższa zmiana podowduje problemy z komendą xref-find-references, w szczególności
+  ;; w przypadku korzystania z lsp-mode i funkcji lsp-find-references (C-c l g r)
+  ;; :config
+  ;; (setq xref-show-xrefs-function 'helm-xref-show-xrefs))
 
 (use-package helm-projectile
   :ensure t
@@ -985,16 +992,25 @@
   (python-shell-interpreter "python3"))
 
 (use-package yaml-mode
-    :ensure t)
+  :ensure t
+  :mode ("\\.yml\\'" . yaml-mode)
+  :hook (yaml-mode . (lambda () (define-key yaml-mode-map "\C-m" 'newline-and-indent))))
 
-  (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+(use-package c-mode
+  :ensure nil
+    :hook (c-mode . lsp-deferred))
 
-  ;; Unlike python-mode, this mode follows the Emacs convention of not
-  ;; binding the ENTER key to `newline-and-indent'.  To get this
-  ;; behavior, add the key definition to `yaml-mode-hook':
-  (add-hook 'yaml-mode-hook
-            '(lambda ()
-               (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
+(use-package c++-mode
+  :ensure nil
+  :mode ("\\.tpp\\'" . c++-mode)
+  :hook (c++-mode . lsp-deferred))
+
+(use-package docstr
+  :ensure t
+  :hook
+  (c++-mode . docstr-mode)
+  :config
+  (setq docstr-key-support t))
 
 ;; (use-package paredit
 ;;   :ensure t
@@ -1036,6 +1052,7 @@
 (global-set-key (kbd "C-c s")      #'my/kill-sentence-at-point)
 (global-set-key (kbd "C-c x")      #'delete-trailing-whitespace)
 (global-set-key (kbd "C-c w")      #'my/toggle-highlight-trailing-whitespaces)
+(global-set-key (kbd "C-c e")      #'global-whitespace-mode)
 (global-set-key (kbd "C-c h")      #'my/toggle-idle-highlight-mode)
 (global-set-key (kbd "C-c C-e")    #'eval-region)
 (global-set-key (kbd "C-c t")      #'my/untabify-entire-buffer)
@@ -1086,7 +1103,8 @@
 ;; (add-hook 'quit-window-hook <fun>)
 
 ;; XREF
-(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+;; do not overwrite xref backend (certain modes have it's own backend for that, e.g. lsp-mode)
+;; (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
 
 ;; MINIBUFFER
 (defun my/minibuffer-setup ()

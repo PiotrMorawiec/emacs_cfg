@@ -9,6 +9,9 @@ The structure of this file has been inspired by the [[https://github.com/daviwil
 
 Type =C-c C-v t= or =org-babel-tangle= to tangle this file into =init.el=.
 
+The configuration file takes advantage of *use-package* macro.
+Check out [[https://ianyepan.github.io/posts/setting-up-use-package/][this tutorial]] if you're looking for quick reference / reminder on *use-package* usage.
+
 * Start message
 
 Print start-of-configuration message, and set lexical binding for the init file.
@@ -23,6 +26,8 @@ Print start-of-configuration message, and set lexical binding for the init file.
 #+begin_src emacs-lisp
   ;; The default is 800 kilobytes.  Measured in bytes.
   (setq gc-cons-threshold (* 50 1000 1000))
+
+  (setq read-process-output-max (* 1024 1024))
 
   (defun my/display-startup-time ()
     (message "Emacs loaded in %s with %d garbage collections."
@@ -205,9 +210,6 @@ Print start-of-configuration message, and set lexical binding for the init file.
   ;; BASIC UI CONFIG
   ;; ==============================================================
 
-  ;; Set startup screen photo
-  ;; (setq fancy-splash-image "path")
-
   (tool-bar-mode -1)
   (menu-bar-mode -1)
   (scroll-bar-mode -1)
@@ -218,7 +220,7 @@ Print start-of-configuration message, and set lexical binding for the init file.
   (column-number-mode 1)
 
   ;; Enable / disable displaying LR/CR characters
-  ;; (global-whitespace-mode nil)
+  (global-whitespace-mode nil)
 
   ;; Enable mouse support in terminal Emacs
   (xterm-mouse-mode 1)
@@ -370,7 +372,8 @@ Fixed Pitch vs Variable Pitch:
     (setq dashboard-set-heading-icons t)
     (setq dashboard-set-file-icons t)
     (setq dashboard-set-footer nil)
-    (setq dashboard-items '((projects  . 5)
+    (setq dashboard-items '((projects  . 3)
+                            (recents   . 3 )
                             (agenda    . 3)))
     (dashboard-setup-startup-hook))
 #+end_src
@@ -390,7 +393,8 @@ Fixed Pitch vs Variable Pitch:
     :ensure t)
 
   ;; This should be invoked on a given machine only once
-  ;; (all-the-icons-install-fonts)
+  (unless (member "all-the-icons" (font-family-list))
+    (all-the-icons-install-fonts t))
 
   ;; Test all-the-icons package with executing (C-x C-e)
   ;; (all-the-icons-insert-alltheicon)
@@ -663,7 +667,27 @@ This snippet adds a hook to =org-mode= buffers so that =my/org-babel-tangle-conf
                              (add-hook 'after-save-hook #'my/org-babel-tangle-config)))
 
 #+end_src
+
 ** LSP (Language Server Protocol) mode
+
+There ae two main clients of Language Servers in Emacs:
+- lsp-mode
+- eglot
+
+One should select and use only one the the above as (at least up to my understanding) these cannot work together.
+This configuration focuses on on *lsp-mode*.
+
+After loading this configuration, tyle =C-c l= to see all LSP Mode options.
+The most usefull are:
+- =C-c l g g= - lsp-find-definition
+- =C-c l g i= - lsp-find-declaration
+- =C-c l g d= - lsp-find-implementation
+- =C-c l g r= - lsp-find-references
+- =C-c l r r= - this will rename given symbol across all the files within the project
+
+One of the most usefull features of LSP Mode are backend implementations for standard Emacs utilities like:
+- xref (=lsd-find-*= commands)
+- completion-at-point (LSP Mode has its own backend for that but =company-mode= looks much better)
 
 #+begin_src emacs-lisp
   (defun my/lsp-mode-setup ()
@@ -735,6 +759,14 @@ This snippet adds a hook to =org-mode= buffers so that =my/org-babel-tangle-conf
     :hook (company-mode . company-box-mode))
 
 #+end_src
+
+** Code commenting (evil-nerd-commenter)
+
+#+begin_src emacs-lisp
+  (use-package evil-nerd-commenter
+    :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+#+end_src
+
 ** Terminals
 
 *** term-mode
@@ -874,9 +906,9 @@ In order to overcome this, you can customize the remote git executable, and set 
   ;; Set default connection mode to SSH
   (setq tramp-default-method "ssh")
   ;; Set default user
-  (setq tramp-default-user "pi")
+  (setq tramp-default-user "pmorawie")
   ;; Set default host
-  (setq tramp-default-host "192.168.1.5")
+  (setq tramp-default-host "oulnxc77.emea.nsn-net.net")
 #+end_src
 
 ** Dired
@@ -1102,6 +1134,8 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
 
 ** ag, rg, xref
 
+There apckages are most likely built in Emacs so it's not necessary to load them using use-package unless we intent to introduce some configuration tweaks.
+
 #+begin_src emacs-lisp
   ;; Load Silver Searcher
   (use-package ag
@@ -1149,10 +1183,10 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
 ** auto-complete
 
 #+begin_src emacs-lisp
-  (use-package auto-complete
-    :ensure t
-    :config
-    (global-auto-complete-mode t))
+  ;; (use-package auto-complete
+  ;;   :ensure t
+  ;;   :config
+  ;;   (global-auto-complete-mode t))
 #+end_src
 
 ** recentf
@@ -1229,9 +1263,9 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
     :ensure t)
 
   (use-package treemacs-all-the-icons
-    :ensure t
-    :after (treemacs all-the-icons))
-  
+    :after (treemacs all-the-icons)
+    :ensure t)
+
   (use-package treemacs-icons-dired
     :ensure t
     :hook (dired-mode . treemacs-icons-dired-enable-once))
@@ -1288,9 +1322,12 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
   (use-package helm-xref
     :ensure t
     :after helm
-    :commands helm-xref
-    :config
-    (setq xref-show-xrefs-function 'helm-xref-show-xrefs))
+    :commands helm-xref)
+
+    ;; Poniższa zmiana podowduje problemy z komendą xref-find-references, w szczególności
+    ;; w przypadku korzystania z lsp-mode i funkcji lsp-find-references (C-c l g r)
+    ;; :config
+    ;; (setq xref-show-xrefs-function 'helm-xref-show-xrefs))
 
   (use-package helm-projectile
     :ensure t
@@ -1366,17 +1403,45 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
 ** yaml-mode
 
 #+begin_src emacs-lisp
-(use-package yaml-mode
-    :ensure t)
+  (use-package yaml-mode
+    :ensure t
+    :mode ("\\.yml\\'" . yaml-mode)
+    :hook (yaml-mode . (lambda () (define-key yaml-mode-map "\C-m" 'newline-and-indent))))
+#+end_src
 
-  (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+** c-mode
 
-  ;; Unlike python-mode, this mode follows the Emacs convention of not
-  ;; binding the ENTER key to `newline-and-indent'.  To get this
-  ;; behavior, add the key definition to `yaml-mode-hook':
-  (add-hook 'yaml-mode-hook
-            '(lambda ()
-               (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
+#+begin_src emacs-lisp
+  (use-package c-mode
+    :ensure nil
+      :hook (c-mode . lsp-deferred))
+#+end_src
+
+** c++-mode
+
+#+begin_src emacs-lisp
+  (use-package c++-mode
+    :ensure nil
+    :mode ("\\.tpp\\'" . c++-mode)
+    :hook (c++-mode . lsp-deferred))
+#+end_src
+
+** docstr
+
+This package faciliates generation of the code comments used by Doxygen.
+Some usefull sites:
+- [[https://emacs-vs.github.io/docstr/][Man page of the package]]
+- [[https://github.com/emacs-vs/docstr/issues/7][Tips from package maintainer on how to use the package]]
+
+
+
+#+begin_src emacs-lisp
+  (use-package docstr
+    :ensure t
+    :hook
+    (c++-mode . docstr-mode)
+    :config
+    (setq docstr-key-support t))
 #+end_src
 
 ** paredit
@@ -1428,6 +1493,7 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
   (global-set-key (kbd "C-c s")      #'my/kill-sentence-at-point)
   (global-set-key (kbd "C-c x")      #'delete-trailing-whitespace)
   (global-set-key (kbd "C-c w")      #'my/toggle-highlight-trailing-whitespaces)
+  (global-set-key (kbd "C-c e")      #'global-whitespace-mode)
   (global-set-key (kbd "C-c h")      #'my/toggle-idle-highlight-mode)
   (global-set-key (kbd "C-c C-e")    #'eval-region)
   (global-set-key (kbd "C-c t")      #'my/untabify-entire-buffer)
@@ -1470,28 +1536,29 @@ In the pop-up =read-from-minibuffer= interface triggled by =gts-prompt-picker=, 
 #+end_src
 
 #+begin_src emacs-lisp
-;; PROG
-(add-hook 'prog-mode-hook 'toggle-truncate-lines)
-(add-hook 'prog-mode-hook 'linum-mode)
-(add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+  ;; PROG
+  (add-hook 'prog-mode-hook 'toggle-truncate-lines)
+  (add-hook 'prog-mode-hook 'linum-mode)
+  (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 
-;; POST COMMAND
-;; (add-hook 'post-command-hook #'highlight-syntax-duplicates)
+  ;; POST COMMAND
+  ;; (add-hook 'post-command-hook #'highlight-syntax-duplicates)
 
-;; KILL BUFFER / QUIT WINDOW
-;; (add-hook 'kill-buffer-hook <fun>)
-;; (add-hook 'quit-window-hook <fun>)
+  ;; KILL BUFFER / QUIT WINDOW
+  ;; (add-hook 'kill-buffer-hook <fun>)
+  ;; (add-hook 'quit-window-hook <fun>)
 
-;; XREF
-(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  ;; XREF
+  ;; do not overwrite xref backend (certain modes have it's own backend for that, e.g. lsp-mode)
+  ;; (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
 
-;; MINIBUFFER
-(defun my/minibuffer-setup ()
-  "Function sets font size in the minibuffer"
-  (set (make-local-variable 'face-remapping-alist)
-       '((default :height 1.3))))
+  ;; MINIBUFFER
+  (defun my/minibuffer-setup ()
+    "Function sets font size in the minibuffer"
+    (set (make-local-variable 'face-remapping-alist)
+         '((default :height 1.3))))
 
-(add-hook 'minibuffer-setup-hook 'my/minibuffer-setup)
+  (add-hook 'minibuffer-setup-hook 'my/minibuffer-setup)
 #+end_src
 
 * End message
