@@ -7,7 +7,8 @@ The structure of this file has been inspired by the [[https://github.com/daviwil
 * Prerequisites
 
 This configuration requires following, additional packages to work as expected:
-- python lsp package - [[https://emacs-lsp.github.io/lsp-mode/page/lsp-pylsp/][pylsp]]
+- Python language server - [[https://emacs-lsp.github.io/lsp-mode/page/lsp-pylsp/][pylsp]]
+- C++ language server - [[https://emacs-lsp.github.io/lsp-mode/tutorials/CPP-guide/][clangd]] (tested on version 13)
 - ncurses
 
 * How to edit configuration ?
