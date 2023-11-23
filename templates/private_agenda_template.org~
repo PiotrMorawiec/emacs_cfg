@@ -1,0 +1,16 @@
+
+#+TITLE:         ${title}
+#+CATEGORY: ${title}
+#+AUTHOR:    %^{Author}
+#+DATE:         %U
+#+FILETAGS: work_agenda
+
+* Active tasks
+
+** TODO %?
+
+* Backlog
+
+
+
+* Notes

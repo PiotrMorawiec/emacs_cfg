@@ -1,0 +1,12 @@
+
+#+TITLE:         ${title}
+#+CATEGORY: ${title}
+#+AUTHOR:    %^{Author}
+#+DATE:         %U
+#+FILETAGS: todos
+
+* Tasks
+
+** TODO %?
+
+* Backlog

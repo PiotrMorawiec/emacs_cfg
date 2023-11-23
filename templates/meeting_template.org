@@ -1,0 +1,18 @@
+
+#+TITLE:         ${title}
+#+CATEGORY: ${title}
+#+AUTHOR:    %^{Author}
+#+DATE:         %U
+#+FILETAGS: work_meeting
+#+STARTUP:  inlineimages latexpreview
+
+*TOPIC* %^{Topic}
+
+* Highlights
+- info %?
+  
+* Summary
+
+
+* TODO [0/1]
+- [ ] ap

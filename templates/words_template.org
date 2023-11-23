@@ -1,0 +1,12 @@
+
+#+TITLE:        ${title}
+#+FILETAGS: english
+#+STARTUP:  inlineimages latexpreview
+
+* Words
+-  %?
+  
+* Sentences
+- 
+
+* Grammar

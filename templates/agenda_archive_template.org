@@ -1,0 +1,14 @@
+
+#+TITLE:         ${title}
+#+CATEGORY: ${title}
+#+AUTHOR:    %^{Author}
+#+DATE:         %U
+#+FILETAGS: agenda_archive
+
+* Private
+
+* Work
+
+* Miscalenous
+
+* Others
