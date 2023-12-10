@@ -186,6 +186,7 @@
 (blink-cursor-mode 1)
 (delete-selection-mode 1)
 (column-number-mode 1)
+(pixel-scroll-precision-mode)
 
 ;; Enable / disable displaying LR/CR characters
 ;; (global-whitespace-mode nil)
@@ -718,6 +719,8 @@
   :config
   (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")  ;; Set this to match your custom shell prompt
   ;;(setq vterm-shell "zsh")                       ;; Set this to customize the shell to launch
+  (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash"))
+  (add-to-list 'vterm-tramp-shells '("sudo" "/bin/bash"))
   (setq vterm-max-scrollback 10000)
   (setq vterm-buffer-name-string "vterm %s")
   :hook
@@ -1209,7 +1212,7 @@
 
 ;; PROG
 (add-hook 'prog-mode-hook 'toggle-truncate-lines)
-(add-hook 'prog-mode-hook 'linum-mode)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 (add-hook 'prog-mode-hook 'hl-line-mode)
 

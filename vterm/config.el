@@ -62,6 +62,7 @@
 ;; so it lacks remote user and hostname prepended to it.
 (defun vterm--get-directory (path)
   "[OVERLOADED] Get normalized directory to PATH."
+  (message "Path: %s" path)
   (when path
     (let (directory)
       (if (string-match "^\\(.*?\\)@\\(.*?\\):\\(.*?\\)$" path)
@@ -72,17 +73,18 @@
               (if (and (string-equal user user-login-name)
                        (string-equal host (system-name)))
                   (progn
-		    (message "Path on local host")
+		    (message "Path on local host | user: %s | host: %s" user host)
                     (when (file-directory-p dir)
                       (setq directory (file-name-as-directory dir)))
 	            (message (concat "directory: " directory)))
 		(progn
-		  (message "Path on remote host")
+		  (message "Path on remote host | user: %s | host: %s" user host)
 		  (message default-directory)
 		  (message (file-remote-p default-directory))
                   (setq directory
-			;; Bellow is what i altered
-			(file-name-as-directory (concat (file-remote-p default-directory) dir))))))
+			;; Bellow is what i altered (hostname of a given remote server must me exactly the same as hostname configured in ~/.ssh/config)
+			(file-name-as-directory (concat "/ssh:" user "@" host ":" dir))))))
+			;; (file-name-as-directory (concat (file-remote-p default-directory) dir))))))
 	    (message (concat "directory: " directory))
 	    )
         (when (file-directory-p path)

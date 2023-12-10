@@ -5,6 +5,7 @@
 * TABLE OF CONTENTS                                                     :toc:
 - [[#welcome][Welcome]]
 - [[#hints-and-useful-commands][Hints and useful commands]]
+- [[#tips-for-wsl][Tips for WSL]]
 - [[#start-message][Start message]]
 - [[#startup-performance][Startup performance]]
 - [[#custom-functions][Custom functions]]
@@ -67,6 +68,22 @@ Type =C-c C-v t= or =org-babel-tangle= to tangle this file into =init.el=.
 - =org-set-tags-command= (C-c C-q, in org buffers) - org functionality that allows to quickly insert a tag, and / or use a ta specified in =org-tag-alist=
 - org-set-effort
 - org-set-property
+
+* Tips for WSL
+
+When trying to run Emacs on WSL2, you might see =Gdk-Message's= with errors, like
+
+#+begin_example
+Gdk-Message: Unable to load left_ptr_watch from the cursor theme
+Gdk-Message: Unable to load sb_v_double_arrow from the cursor theme
+Gdk-Message: Unable to load sb_h_double_arrow from the cursor theme
+#+end_example
+
+According to [[https://github.com/microsoft/WSL/issues/7750][this github issue]], get rid of these errors, install =adwaita-icon-theme-full= (this works for Ubuntu WSL)
+
+#+begin_src shell
+sudo apt-get install adwaita-icon-theme-full 
+#+end_src
 
 * Start message
 
@@ -274,6 +291,7 @@ Print start-of-configuration message, and set lexical binding for the init file.
   (blink-cursor-mode 1)
   (delete-selection-mode 1)
   (column-number-mode 1)
+  (pixel-scroll-precision-mode)
 
   ;; Enable / disable displaying LR/CR characters
   ;; (global-whitespace-mode nil)
@@ -1031,6 +1049,8 @@ In no region is selectetd, when the enter key is pressed it will copy the curren
     :config
     (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")  ;; Set this to match your custom shell prompt
     ;;(setq vterm-shell "zsh")                       ;; Set this to customize the shell to launch
+    (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash"))
+    (add-to-list 'vterm-tramp-shells '("sudo" "/bin/bash"))
     (setq vterm-max-scrollback 10000)
     (setq vterm-buffer-name-string "vterm %s")
     :hook
@@ -1781,7 +1801,7 @@ Beacon comes up with a nice functionality to highlight a cursor for a while each
 #+begin_src emacs-lisp
   ;; PROG
   (add-hook 'prog-mode-hook 'toggle-truncate-lines)
-  (add-hook 'prog-mode-hook 'linum-mode)
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
   (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
   (add-hook 'prog-mode-hook 'hl-line-mode)
 

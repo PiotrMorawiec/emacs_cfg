@@ -5,7 +5,23 @@
  ;; If there is more than one, they won't work right.
  '(org-agenda-files nil)
  '(package-selected-packages
-   '(evil-nerd-commenter docstr groovy-mode helpful org-pretty-tags emojify org-fancy-priorities toc-org org-roam org-wild-notifier verilog-ext beacon yaml-mode helm-all-the-icons dired-hide-dotfiles dired-open all-the-icons-dired dired-single go-translate eshell-git-prompt vterm eterm-256color dashboard python-mode company-box company helm-lsp lsp-treemacs flycheck lsp-ui lsp-mode which-key command-log-mode keycast idle-highlight-mode highlight-symbol xref helm-xref popwin doom-modeline treemacs-all-the-icons helm-smex helm-rg helm-ag rg ag visual-fill-column viaual-fill-column all-the-icons helm-swoop dumb-jump helm-icons org-bullets treemacs-magit treemacs-icons-dired treemacs-projectile spacemacs-theme drag-stuff highlight-indent-guides paredit gnu-elpa-keyring-update helm-occur helm-projectile ht auto-complete minimap projectile treemacs helm magit gruvbox-theme use-package)))
+   '(ag all-the-icons all-the-icons-dired auto-complete beacon
+	command-log-mode company company-box dashboard
+	dired-hide-dotfiles dired-open dired-single docstr
+	doom-modeline drag-stuff dumb-jump emojify eshell-git-prompt
+	eterm-256color evil-nerd-commenter flycheck
+	gnu-elpa-keyring-update go-translate groovy-mode gruvbox-theme
+	helm helm-ag helm-all-the-icons helm-icons helm-lsp helm-occur
+	helm-projectile helm-rg helm-smex helm-swoop helm-xref helpful
+	highlight-indent-guides highlight-symbol ht
+	idle-highlight-mode keycast lsp-mode lsp-treemacs lsp-ui magit
+	minimap org-bullets org-fancy-priorities org-pretty-tags
+	org-roam org-wild-notifier paredit popwin projectile
+	python-mode rg spacemacs-theme toc-org treemacs
+	treemacs-all-the-icons treemacs-icons-dired treemacs-magit
+	treemacs-projectile use-package verilog-ext verilog-ts-mode
+	viaual-fill-column visual-fill-column vterm which-key xref
+	yaml-mode)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
