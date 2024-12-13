@@ -105,6 +105,11 @@ eshell () {
     $EDITOR -e "(+eshell/here)"
 }
 
+# Add git branch if its present to PS1
+parse_git_branch() {
+ git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
+}
+
 black="\[\e[0;30m\]"
 red="\[\e[0;31m\]"
 green="\[\e[0;32m\]"
@@ -117,7 +122,9 @@ orange="\[\e[0;91m\]"
 normal="\[\e[0m\]"
 # reset_color="\[\e[39m\]"
 # BASIC_PS1="${green}\u${normal}@${blue}\H${normal}:${yellow}\w${normal} ${green}\$${normal} "
-BASIC_PS1="${red}\u${normal} ${green}@${normal} ${blue}\h${normal} ${yellow}[ \w ]${normal} ${red}\$${normal} "
+# BASIC_PS1="${red}\u${normal} ${green}@${normal} ${blue}\h${normal} ${yellow}[ \w ]${normal} ${red}\$${normal} "
+# BASIC_PS1="${red}\u${normal} ${green}@${normal} ${blue}\h${normal} ${yellow}[ \w ]${normal} ${red}$(parse_git_branch) \$${normal} "
+BASIC_PS1='\[\e[0;31m\]\u\[\e[0m\] \[\e[0;32m\]@\[\e[0m\] \[\e[0;34m\]\h\[\e[0m\] \[\e[0;33m\][ \w ]\[\e[0m\] \[\e[0;31m\]$(parse_git_branch) \$\[\e[0m\] '
 # echo "----$PS1----"
 PS1="$BASIC_PS1"
 
@@ -144,6 +151,8 @@ to_buff () {
     fi
 
 }
+
+source ~/.bash_aliases
 
 if [[ "$INSIDE_EMACS" = 'vterm' ]] \
     && [[ -n ${EMACS_VTERM_PATH} ]] \

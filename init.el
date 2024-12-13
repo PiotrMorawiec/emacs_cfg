@@ -178,6 +178,12 @@
 ;; BASIC UI CONFIG
 ;; ==============================================================
 
+;; MacOS specific
+;; (setq mac-option-key-is-meta nil
+;;    mac-command-key-is-meta t
+;;   mac-command-modifier 'meta
+;;   mac-option-modifier 'none)
+
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
@@ -570,7 +576,7 @@
   :hook
   (org-mode . org-fancy-priorities-mode)
   :config
-  (setq org-fancy-priorities-list '("[HIGH]" "[MEDIUM]" "[LOW]"))
+  (setq org-fancy-priorities-list '("[HIG]" "[MED]" "[LOW]"))
   (setq org-priority-faces
    '((?A :foreground "#ff6c6b" :weight bold)
      (?B :foreground "#98be65" :weight bold)
@@ -609,6 +615,7 @@
 (add-to-list 'org-structure-template-alist '("sv"  . "src verilog"))
 (add-to-list 'org-structure-template-alist '("vhd" . "src vhdl"))
 (add-to-list 'org-structure-template-alist '("sql" . "src sql"))
+(add-to-list 'org-structure-template-alist '("cpp" . "src cpp"))
 
 ;; Automatically tangle our Emacs.org config file when we save it
 (defun my/org-babel-tangle-config ()
@@ -694,6 +701,7 @@
 
 
   (use-package company-box
+    :after company-mode
     :hook (company-mode . company-box-mode))
 
 (use-package evil-nerd-commenter
@@ -719,12 +727,16 @@
   :config
   (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")  ;; Set this to match your custom shell prompt
   ;;(setq vterm-shell "zsh")                       ;; Set this to customize the shell to launch
+  (setq vterm-shell "bash")
   (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash"))
   (add-to-list 'vterm-tramp-shells '("sudo" "/bin/bash"))
   (setq vterm-max-scrollback 10000)
-  (setq vterm-buffer-name-string "vterm %s")
-  :hook
-  (vterm-mode . my/vterm-load-cfg-files))
+  (setq vterm-buffer-name-string "vterm %s"))
+
+;; for some reason vterm hooks get loaded in reverse order ...
+(add-hook 'vterm-mode-hook 'vterm-clear)
+(add-hook 'vterm-mode-hook 'my/vterm-load-config)
+(add-hook 'vterm-mode-hook 'my/vterm-load-cfg-files)
 
 (defun my/configure-eshell ()
   ;; Save command history when commands are entered
@@ -788,14 +800,18 @@
   :custom ((dired-listing-switches "-agho --group-directories-first"))
   )
 
-;; Thanks to this package, the directories that we've visited won't be existing as opened buffers.
-;; Instead, all these buffers will be closed automatically.
-(use-package dired-single
-  :after (dired)
-  :commands (dired dired-jump)
-  :bind (:map dired-mode-map
-              ("<C-return>" . dired-single-up-directory)
-              ("<return>"   . dired-single-buffer)))
+;; MacOS specific
+;; (setq insert-directory-program "gls" dired-use-ls-dired t)
+;; (setq dired-listing-switches "-al --group-directories-first")
+
+ ;; Thanks to this package, the directories that we've visited won't be existing as opened buffers.
+ ;; Instead, all these buffers will be closed automatically.
+ (use-package dired-single
+   :after (dired)
+   :commands (dired dired-jump)
+   :bind (:map dired-mode-map
+               ("<C-return>" . dired-single-up-directory)
+               ("<return>"   . dired-single-buffer)))
 
 ;; This package has been replaced with "treemacs-icons-dired"
 ;; (use-package all-the-icons-dired)
@@ -1154,6 +1170,10 @@
 ;; KEY BINDINGS
 ;; ==============================================================
 
+;; MacOS specific
+;; (global-set-key (kbd "S-SPC")     #'set-mark-command)
+
+;; Others
 (global-set-key (kbd "M-v")        #'my/scroll-half-page-down)
 (global-set-key (kbd "C-v")        #'my/scroll-half-page-up)
 

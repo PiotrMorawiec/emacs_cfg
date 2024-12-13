@@ -283,6 +283,12 @@ Print start-of-configuration message, and set lexical binding for the init file.
   ;; BASIC UI CONFIG
   ;; ==============================================================
 
+  ;; MacOS specific
+  ;; (setq mac-option-key-is-meta nil
+  ;;    mac-command-key-is-meta t
+  ;;   mac-command-modifier 'meta
+  ;;   mac-option-modifier 'none)
+
   (tool-bar-mode -1)
   (menu-bar-mode -1)
   (scroll-bar-mode -1)
@@ -789,7 +795,7 @@ ORG Agenda related variables:
     :hook
     (org-mode . org-fancy-priorities-mode)
     :config
-    (setq org-fancy-priorities-list '("[HIGH]" "[MEDIUM]" "[LOW]"))
+    (setq org-fancy-priorities-list '("[HIG]" "[MED]" "[LOW]"))
     (setq org-priority-faces
      '((?A :foreground "#ff6c6b" :weight bold)
        (?B :foreground "#98be65" :weight bold)
@@ -844,6 +850,7 @@ ORG Agenda related variables:
   (add-to-list 'org-structure-template-alist '("sv"  . "src verilog"))
   (add-to-list 'org-structure-template-alist '("vhd" . "src vhdl"))
   (add-to-list 'org-structure-template-alist '("sql" . "src sql"))
+  (add-to-list 'org-structure-template-alist '("cpp" . "src cpp"))
 #+end_src
 
 **** Auto-Tangle Configuration Files
@@ -975,6 +982,7 @@ LSP mode works with TRAMP, but certain conditions have to be met:
 
 
     (use-package company-box
+      :after company-mode
       :hook (company-mode . company-box-mode))
 
 #+end_src
@@ -1040,21 +1048,26 @@ In no region is selectetd, when the enter key is pressed it will copy the curren
 **** vterm configuration
 
 #+begin_src emacs-lisp
-  (defun my/vterm-load-cfg-files ()
-    (interactive)
-    (load-file vterm-config-file))
+ (defun my/vterm-load-cfg-files ()
+   (interactive)
+   (load-file vterm-config-file))
 
-  (use-package vterm
-    :commands vterm
-    :config
-    (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")  ;; Set this to match your custom shell prompt
-    ;;(setq vterm-shell "zsh")                       ;; Set this to customize the shell to launch
-    (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash"))
-    (add-to-list 'vterm-tramp-shells '("sudo" "/bin/bash"))
-    (setq vterm-max-scrollback 10000)
-    (setq vterm-buffer-name-string "vterm %s")
-    :hook
-    (vterm-mode . my/vterm-load-cfg-files))
+ (use-package vterm
+   :commands vterm
+   :config
+   (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")  ;; Set this to match your custom shell prompt
+   ;;(setq vterm-shell "zsh")                       ;; Set this to customize the shell to launch
+   (setq vterm-shell "bash")
+   (add-to-list 'vterm-tramp-shells '("ssh" "/bin/bash"))
+   (add-to-list 'vterm-tramp-shells '("sudo" "/bin/bash"))
+   (setq vterm-max-scrollback 10000)
+   (setq vterm-buffer-name-string "vterm %s"))
+
+ ;; for some reason vterm hooks get loaded in reverse order ...
+ (add-hook 'vterm-mode-hook 'vterm-clear)
+ (add-hook 'vterm-mode-hook 'my/vterm-load-config)
+ (add-hook 'vterm-mode-hook 'my/vterm-load-cfg-files)
+
 #+end_src
 
 *** Eshell
@@ -1226,43 +1239,47 @@ In Dired, you're going to be using selections for files you want to work on. In 
 
 
 #+begin_src emacs-lisp
-  (use-package dired
-    :ensure nil ;; dires is a built-in emacs package, so don't look for it in package repositories
-    :commands (dired dired-jump) ;; defer this config until one of this commands is executed
-    :bind (("C-x j" . dired-jump)
-           ;; those bindings will only be valid if dired-mode is active
-           :map dired-mode-map
-           ;; change this from ^ which is not convenient
-           ("<C-backspace>" . dired-up-directory)
-           ;; this one is a default keybinding, keep it here as an information tough
-           ("v" . dired-view-file))
-    :custom ((dired-listing-switches "-agho --group-directories-first"))
-    )
+(use-package dired
+  :ensure nil ;; dires is a built-in emacs package, so don't look for it in package repositories
+  :commands (dired dired-jump) ;; defer this config until one of this commands is executed
+  :bind (("C-x j" . dired-jump)
+         ;; those bindings will only be valid if dired-mode is active
+         :map dired-mode-map
+         ;; change this from ^ which is not convenient
+         ("<C-backspace>" . dired-up-directory)
+         ;; this one is a default keybinding, keep it here as an information tough
+         ("v" . dired-view-file))
+  :custom ((dired-listing-switches "-agho --group-directories-first"))
+  )
 
-  ;; Thanks to this package, the directories that we've visited won't be existing as opened buffers.
-  ;; Instead, all these buffers will be closed automatically.
-  (use-package dired-single
-    :after (dired)
-    :commands (dired dired-jump)
-    :bind (:map dired-mode-map
-                ("<C-return>" . dired-single-up-directory)
-                ("<return>"   . dired-single-buffer)))
+;; MacOS specific
+;; (setq insert-directory-program "gls" dired-use-ls-dired t)
+;; (setq dired-listing-switches "-al --group-directories-first")
 
-  ;; This package has been replaced with "treemacs-icons-dired"
-  ;; (use-package all-the-icons-dired)
+ ;; Thanks to this package, the directories that we've visited won't be existing as opened buffers.
+ ;; Instead, all these buffers will be closed automatically.
+ (use-package dired-single
+   :after (dired)
+   :commands (dired dired-jump)
+   :bind (:map dired-mode-map
+               ("<C-return>" . dired-single-up-directory)
+               ("<return>"   . dired-single-buffer)))
 
-  ;;  This package allow us to set a program different than Emacs, that we want to open given files with
-  (use-package dired-open
-    :commands (dired dired-jump)
-    :config
-    ;; Doesn't work as expected!
-    ;;(add-to-list 'dired-open-functions #'dired-open-xdg t)
-    (setq dired-open-extensions '(("png" . "gwenview")
-                                  ("jpg" . "gwenview"))))
+;; This package has been replaced with "treemacs-icons-dired"
+;; (use-package all-the-icons-dired)
 
-  (use-package dired-hide-dotfiles
-    :hook (dired-mode . dired-hide-dotfiles-mode)
-    :bind (:map dired-mode-map ("h" . dired-hide-dotfiles-mode)))
+;;  This package allow us to set a program different than Emacs, that we want to open given files with
+(use-package dired-open
+  :commands (dired dired-jump)
+  :config
+  ;; Doesn't work as expected!
+  ;;(add-to-list 'dired-open-functions #'dired-open-xdg t)
+  (setq dired-open-extensions '(("png" . "gwenview")
+                                ("jpg" . "gwenview"))))
+
+(use-package dired-hide-dotfiles
+  :hook (dired-mode . dired-hide-dotfiles-mode)
+  :bind (:map dired-mode-map ("h" . dired-hide-dotfiles-mode)))
 
 #+end_src
 
@@ -1735,9 +1752,11 @@ Beacon comes up with a nice functionality to highlight a cursor for a while each
   ;; ==============================================================
   ;; KEY BINDINGS
   ;; ==============================================================
-#+end_src
 
-#+begin_src emacs-lisp
+  ;; MacOS specific
+  ;; (global-set-key (kbd "S-SPC")     #'set-mark-command)
+
+  ;; Others
   (global-set-key (kbd "M-v")        #'my/scroll-half-page-down)
   (global-set-key (kbd "C-v")        #'my/scroll-half-page-up)
 
